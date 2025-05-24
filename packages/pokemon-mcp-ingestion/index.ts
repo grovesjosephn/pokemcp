@@ -13,7 +13,7 @@ interface Pokemon {
   weight: number;
   base_experience: number;
   generation: number;
-  species_url: string;
+  species?: { name: string; url: string };
   sprites: {
     front_default: string;
     back_default: string;
@@ -232,10 +232,15 @@ class PokemonDataIngestion {
     const pokemonPromises = pokemonList.map(async (pokemon) => {
       try {
         const pokemonId = parseInt(pokemon.url.split('/').slice(-2, -1)[0]);
-        const detailData = await this.fetchWithRetry(pokemon.url) as Pokemon;
-        
+        const detailData = await this.fetchWithRetry(`${this.baseUrl}/pokemon/${pokemonId}`) as Pokemon;
+        console.log('DEBUG detailData:', detailData);
         // Get generation from species data
-        const speciesData = await this.fetchWithRetry(detailData.species_url) as SpeciesResponse;
+        if (!detailData.species || !detailData.species.url) {
+          console.error(`❌ No species.url for ${pokemon.name}, detailData:`, detailData);
+          return null;
+        }
+        const speciesData = await this.fetchWithRetry(detailData.species.url) as SpeciesResponse;
+        console.log('DEBUG speciesData:', speciesData);
         const generation = parseInt(speciesData.generation.url.split('/').slice(-2, -1)[0]);
         
         return {
@@ -245,7 +250,7 @@ class PokemonDataIngestion {
           weight: detailData.weight,
           base_experience: detailData.base_experience,
           generation,
-          species_url: detailData.species_url,
+          species_url: detailData.species?.url || '',
           sprite_url: detailData.sprites?.front_default || '',
           stats: detailData.stats,
           types: detailData.types,
@@ -326,7 +331,9 @@ class PokemonDataIngestion {
     for (let i = 0; i < pokemonList.results.length; i += this.batchSize) {
       const batch = pokemonList.results.slice(i, i + this.batchSize);
       const count = await this.ingestPokemonBatch(batch);
-      console.log(`✅ Processed batch ${i / this.batchSize + 1}: ${count} Pokemon`);
+      console.log(`✅ Processed batch ${Math.floor(i / this.batchSize) + 1}: ${count} Pokemon`);
+      // Add a small delay between batches to avoid rate limiting
+      await this.delay(1000);
     }
     
     console.log('✅ Pokemon data ingestion complete');
