@@ -16,6 +16,11 @@ import {
 import Database from 'better-sqlite3';
 import path from 'path';
 import { promises as fs } from 'fs';
+import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface Pokemon {
   id: number;
@@ -69,12 +74,31 @@ class PokemonMCPServer {
   private db: Database.Database;
 
   constructor() {
-    // Ensure data directory exists
-    const dataDir = path.resolve(process.cwd(), '../../data');
+    // Ensure data directory exists - handle both local dev and Claude Desktop paths
+    const dataDir =
+      process.env.POKEMON_DATA_DIR ||
+      path.resolve(__dirname, '../../data') ||
+      path.resolve(process.cwd(), '../../data');
+
+    // Ensure directory exists
     fs.mkdir(dataDir, { recursive: true }).catch(console.error);
 
     const dbPath = path.join(dataDir, 'pokemon.sqlite');
-    this.db = new Database(dbPath);
+    console.error(`📁 Using database path: ${dbPath}`);
+
+    // Check if database file exists
+    try {
+      if (!existsSync(dbPath)) {
+        console.error(`❌ Database file not found at: ${dbPath}`);
+        console.error(`💡 Make sure to run: ./scripts/setup-local-dev.sh`);
+        process.exit(1);
+      }
+      this.db = new Database(dbPath);
+      console.error(`✅ Database connected successfully`);
+    } catch (error) {
+      console.error(`❌ Database connection failed:`, error);
+      process.exit(1);
+    }
 
     this.server = new Server(
       {
@@ -379,8 +403,8 @@ class PokemonMCPServer {
     const stats = this.db
       .prepare(
         `
-      SELECT stat_name, base_stat, effort 
-      FROM stats 
+      SELECT stat_name, base_stat, effort
+      FROM stats
       WHERE pokemon_id = ?
     `
       )
@@ -389,7 +413,7 @@ class PokemonMCPServer {
     const types = this.db
       .prepare(
         `
-      SELECT t.name 
+      SELECT t.name
       FROM types t
       JOIN pokemon_types pt ON t.id = pt.type_id
       WHERE pt.pokemon_id = ?
@@ -450,8 +474,8 @@ ${stats.map((s) => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
 
     if (args.type) {
       conditions.push(`EXISTS (
-        SELECT 1 FROM pokemon_types pt2 
-        JOIN types t2 ON pt2.type_id = t2.id 
+        SELECT 1 FROM pokemon_types pt2
+        JOIN types t2 ON pt2.type_id = t2.id
         WHERE pt2.pokemon_id = p.id AND LOWER(t2.name) = LOWER(?)
       )`);
       params.push(args.type);
@@ -763,10 +787,10 @@ ${results
     return this.db
       .prepare(
         `
-      SELECT stat_name, base_stat, effort 
-      FROM stats 
+      SELECT stat_name, base_stat, effort
+      FROM stats
       WHERE pokemon_id = ?
-      ORDER BY 
+      ORDER BY
         CASE stat_name
           WHEN 'hp' THEN 1
           WHEN 'attack' THEN 2
@@ -783,6 +807,7 @@ ${results
   private setupErrorHandling(): void {
     this.server.onerror = (error: Error) => {
       console.error('❌ Server error:', error.message);
+      console.error('Stack:', error.stack);
     };
 
     process.on('SIGINT', async () => {
@@ -792,6 +817,17 @@ ${results
       }
       await this.server.close();
       process.exit(0);
+    });
+
+    process.on('uncaughtException', (error) => {
+      console.error('❌ Uncaught exception:', error.message);
+      console.error('Stack:', error.stack);
+      process.exit(1);
+    });
+
+    process.on('unhandledRejection', (reason) => {
+      console.error('❌ Unhandled rejection:', reason);
+      process.exit(1);
     });
   }
 

@@ -2,7 +2,7 @@
   "name": "pokemon-mcp-server",
   "version": "1.0.0",
   "description": "Pokemon MCP Server - Comprehensive Pokemon data through Model Context Protocol",
-  "main": "dist/server.js",
+  "main": "server.ts",
   "type": "module",
   "bin": {
     "pokemon-mcp-server": "./dist/server.js"
@@ -11,16 +11,21 @@
     "build": "tsc",
     "dev": "tsx watch server.ts",
     "start": "tsx server.ts",
+    "inspect": "npx @modelcontextprotocol/inspector tsx server.ts",
+    "inspect:cli": "npx @modelcontextprotocol/inspector --cli tsx server.ts",
     "test": "vitest",
     "clean": "rm -rf dist",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepublishOnly": "pnpm build",
+    "prepack": "pnpm build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "catalog:",
     "better-sqlite3": "catalog:"
   },
   "devDependencies": {
+    "@modelcontextprotocol/inspector": "catalog:",
     "@types/better-sqlite3": "catalog:",
     "@types/node": "catalog:",
     "tsx": "catalog:",
@@ -34,15 +39,6 @@
     "model-context-protocol",
     "ai-tools"
   ],
-  "author": "Your Name",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "your-repo-url"
-  },
   "mcp": {
     "server": {
       "command": "tsx",
