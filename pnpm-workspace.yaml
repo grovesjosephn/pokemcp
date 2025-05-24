@@ -12,6 +12,7 @@ catalog:
   "node-fetch": "^3.3.2"
   
   # Dev dependencies
+  "@modelcontextprotocol/inspector": "^0.5.0"
   "@types/better-sqlite3": "^7.6.9"
   "@types/node": "^20.11.30"
   "tsx": "^4.7.1"

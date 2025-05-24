@@ -33,7 +33,5 @@
     "mcp",
     "sqlite",
     "api"
-  ],
-  "author": "Your Name",
-  "license": "MIT"
+  ]
 }

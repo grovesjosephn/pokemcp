@@ -30,6 +30,8 @@ pnpm format:check  # Check formatting without modifying files
 pnpm build         # Compile TypeScript
 pnpm dev           # Watch mode with tsx
 pnpm start         # Run server directly
+pnpm inspect       # Run MCP Inspector GUI for testing
+pnpm inspect:cli   # Run MCP Inspector CLI for testing
 pnpm test          # Run server tests with vitest
 pnpm format        # Format package files
 pnpm format:check  # Check package formatting
@@ -54,6 +56,7 @@ pnpm format:check  # Check package formatting
 - **Data Flow**: PokeAPI → Ingestion service → SQLite → MCP Server → Client
 - **TypeScript**: All packages use TypeScript with tsx for development
 - **Testing**: Vitest for unit and integration testing
+- **MCP Inspector**: Visual and CLI testing tool for debugging MCP server
 
 The database is shared between packages at `../../data/pokemon.sqlite` relative to each package.
 
@@ -143,31 +146,68 @@ docker-compose --profile ingestion --profile server up
 
 ## Claude Desktop Integration
 
-### Option 1: Container with Wrapper Script
+### Option 1: NPM Package (Recommended)
+
+First, build and install the server globally:
+
+```bash
+# Ensure dependencies are installed and database is populated
+pnpm install
+./scripts/setup-local-dev.sh
+
+# Build and install the server package
+cd packages/pokemon-mcp-server
+pnpm build
+npm link
+```
+
+Configure Claude Desktop with the global package:
 
 ```json
 {
   "mcpServers": {
     "pokemon": {
-      "command": "/path/to/pokemcp/scripts/run-server.sh"
+      "command": "pokemon-mcp-server",
+      "env": {
+        "POKEMON_DATA_DIR": "/path/to/pokemcp/data"
+      }
     }
   }
 }
 ```
 
-### Option 2: Local Development (Recommended)
+### Option 2: Direct Node Execution
 
-```bash
-# Run ingestion in container first
-./scripts/setup-local-dev.sh
+If you prefer not to install globally:
 
-# Then configure Claude Desktop for local server
+```json
 {
   "mcpServers": {
     "pokemon": {
-      "command": "tsx",
-      "args": ["server.ts"],
-      "cwd": "/path/to/pokemcp/packages/pokemon-mcp-server"
+      "command": "node",
+      "args": ["/path/to/pokemcp/packages/pokemon-mcp-server/dist/server.js"],
+      "env": {
+        "POKEMON_DATA_DIR": "/path/to/pokemcp/data"
+      }
+    }
+  }
+}
+```
+
+### Option 3: Development Mode
+
+For active development with hot reload:
+
+```json
+{
+  "mcpServers": {
+    "pokemon": {
+      "command": "pnpm",
+      "args": ["--filter", "pokemon-mcp-server", "start"],
+      "cwd": "/path/to/pokemcp",
+      "env": {
+        "POKEMON_DATA_DIR": "/path/to/pokemcp/data"
+      }
     }
   }
 }
