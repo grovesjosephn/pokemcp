@@ -1,0 +1,36 @@
+{
+    "name": "pokemon-mcp-ingestion",
+    "version": "1.0.0",
+    "description": "Pokemon data ingestion for MCP server",
+    "type": "module",
+    "main": "dist/index.js",
+    "bin": {
+      "pokemon-mcp-ingestion": "dist/index.js"
+    },
+    "scripts": {
+      "build": "tsc",
+      "dev": "tsx watch index.ts",
+      "start": "tsx index.ts",
+      "ingest": "tsx index.ts",
+      "test": "tsx test-queries.ts",
+      "clean": "rm -rf dist"
+    },
+    "dependencies": {
+      "better-sqlite3": "^9.4.3",
+      "node-fetch": "^3.3.2"
+    },
+    "devDependencies": {
+      "@types/better-sqlite3": "^7.6.9",
+      "@types/node": "^20.11.30",
+      "tsx": "^4.7.1",
+      "typescript": "^5.4.2"
+    },
+    "keywords": [
+      "pokemon",
+      "mcp",
+      "sqlite",
+      "api"
+    ],
+    "author": "Your Name",
+    "license": "MIT"
+  }

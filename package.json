@@ -1,0 +1,16 @@
+{
+  "name": "pokemcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pokemon MCP Monorepo",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r dev",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.8.0"
+}
