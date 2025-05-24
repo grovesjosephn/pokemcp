@@ -12,7 +12,7 @@
     "dev": "tsx watch index.ts",
     "start": "tsx index.ts",
     "ingest": "tsx index.ts",
-    "test": "tsx test-queries.ts",
+    "test": "vitest",
     "clean": "rm -rf dist",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -25,7 +25,8 @@
     "@types/better-sqlite3": "catalog:",
     "@types/node": "catalog:",
     "tsx": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "keywords": [
     "pokemon",

@@ -19,7 +19,8 @@
   "devDependencies": {
     "prettier": "^3.0.0",
     "husky": "^8.0.0",
-    "lint-staged": "^15.0.0"
+    "lint-staged": "^15.0.0",
+    "vitest": "catalog:"
   },
   "lint-staged": {
     "*.{ts,js,json,md}": [

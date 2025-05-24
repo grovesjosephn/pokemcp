@@ -344,9 +344,11 @@ class PokemonDataIngestion {
     await this.ingestTypes();
 
     // Get Pokemon list
-    const pokemonListUrl = limit
-      ? `${this.baseUrl}/pokemon?limit=${limit}`
-      : `${this.baseUrl}/pokemon?limit=1500`; // Covers most Pokemon
+    const envLimit = process.env.POKEMON_LIMIT
+      ? parseInt(process.env.POKEMON_LIMIT)
+      : null;
+    const finalLimit = limit ?? envLimit ?? 1500;
+    const pokemonListUrl = `${this.baseUrl}/pokemon?limit=${finalLimit}`;
 
     const pokemonList = (await this.fetchWithRetry(
       pokemonListUrl
