@@ -1,0 +1,50 @@
+{
+    "name": "pokemon-mcp-server",
+    "version": "1.0.0",
+    "description": "Pokemon MCP Server - Comprehensive Pokemon data through Model Context Protocol",
+    "main": "dist/server.js",
+    "type": "module",
+    "bin": {
+      "pokemon-mcp-server": "./dist/server.js"
+    },
+    "scripts": {
+      "build": "tsc",
+      "dev": "tsx watch server.ts",
+      "start": "tsx server.ts",
+      "test": "tsx test-server.ts",
+      "clean": "rm -rf dist"
+    },
+    "dependencies": {
+      "@modelcontextprotocol/sdk": "^0.5.0",
+      "better-sqlite3": "^9.2.2"
+    },
+    "devDependencies": {
+      "@types/better-sqlite3": "^7.6.8",
+      "@types/node": "^20.11.24",
+      "tsx": "^4.7.1",
+      "typescript": "^5.3.3"
+    },
+    "keywords": [
+      "mcp",
+      "pokemon",
+      "server",
+      "model-context-protocol",
+      "ai-tools"
+    ],
+    "author": "Your Name",
+    "license": "MIT",
+    "engines": {
+      "node": ">=18.0.0"
+    },
+    "repository": {
+      "type": "git",
+      "url": "your-repo-url"
+    },
+    "mcp": {
+      "server": {
+        "command": "tsx",
+        "args": ["server.ts"],
+        "env": {}
+      }
+    }
+  }
