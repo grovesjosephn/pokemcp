@@ -72,7 +72,7 @@ class PokemonDataIngestion {
     // Ensure data directory exists
     const dataDir = path.resolve(process.cwd(), '../../data');
     fs.mkdir(dataDir, { recursive: true }).catch(console.error);
-    
+
     const dbPath = path.join(dataDir, 'pokemon.sqlite');
     this.db = new Database(dbPath);
     this.baseUrl = 'https://pokeapi.co/api/v2';
@@ -176,7 +176,9 @@ class PokemonDataIngestion {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
       } catch (error) {
-        console.log(`⚠️  Retry ${i + 1}/${retries} for ${url}: ${error instanceof Error ? error.message : String(error)}`);
+        console.log(
+          `⚠️  Retry ${i + 1}/${retries} for ${url}: ${error instanceof Error ? error.message : String(error)}`
+        );
         if (i === retries - 1) throw error;
         await this.delay(1000 * (i + 1)); // Exponential backoff
       }
@@ -184,35 +186,41 @@ class PokemonDataIngestion {
   }
 
   delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async ingestTypes(): Promise<void> {
     console.log('🔄 Fetching Pokemon types...');
-    
-    const typesData = await this.fetchWithRetry(`${this.baseUrl}/type`) as TypeResponse;
-    const insertType = this.db.prepare('INSERT OR IGNORE INTO types (id, name) VALUES (?, ?)');
-    
+
+    const typesData = (await this.fetchWithRetry(
+      `${this.baseUrl}/type`
+    )) as TypeResponse;
+    const insertType = this.db.prepare(
+      'INSERT OR IGNORE INTO types (id, name) VALUES (?, ?)'
+    );
+
     for (const type of typesData.results) {
       const typeId = parseInt(type.url.split('/').slice(-2, -1)[0]);
       insertType.run(typeId, type.name);
     }
-    
+
     console.log(`✅ Inserted ${typesData.results.length} types`);
   }
 
-  async ingestPokemonBatch(pokemonList: Array<{ name: string; url: string }>): Promise<number> {
+  async ingestPokemonBatch(
+    pokemonList: Array<{ name: string; url: string }>
+  ): Promise<number> {
     const insertPokemon = this.db.prepare(`
       INSERT OR REPLACE INTO pokemon 
       (id, name, height, weight, base_experience, generation, species_url, sprite_url)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
+
     const insertStat = this.db.prepare(`
       INSERT OR REPLACE INTO stats (pokemon_id, stat_name, base_stat, effort)
       VALUES (?, ?, ?, ?)
     `);
-    
+
     const insertPokemonType = this.db.prepare(`
       INSERT OR REPLACE INTO pokemon_types (pokemon_id, type_id, slot)
       VALUES (?, ?, ?)
@@ -232,17 +240,26 @@ class PokemonDataIngestion {
     const pokemonPromises = pokemonList.map(async (pokemon) => {
       try {
         const pokemonId = parseInt(pokemon.url.split('/').slice(-2, -1)[0]);
-        const detailData = await this.fetchWithRetry(`${this.baseUrl}/pokemon/${pokemonId}`) as Pokemon;
+        const detailData = (await this.fetchWithRetry(
+          `${this.baseUrl}/pokemon/${pokemonId}`
+        )) as Pokemon;
         console.log('DEBUG detailData:', detailData);
         // Get generation from species data
         if (!detailData.species || !detailData.species.url) {
-          console.error(`❌ No species.url for ${pokemon.name}, detailData:`, detailData);
+          console.error(
+            `❌ No species.url for ${pokemon.name}, detailData:`,
+            detailData
+          );
           return null;
         }
-        const speciesData = await this.fetchWithRetry(detailData.species.url) as SpeciesResponse;
+        const speciesData = (await this.fetchWithRetry(
+          detailData.species.url
+        )) as SpeciesResponse;
         console.log('DEBUG speciesData:', speciesData);
-        const generation = parseInt(speciesData.generation.url.split('/').slice(-2, -1)[0]);
-        
+        const generation = parseInt(
+          speciesData.generation.url.split('/').slice(-2, -1)[0]
+        );
+
         return {
           id: pokemonId,
           name: detailData.name,
@@ -254,16 +271,20 @@ class PokemonDataIngestion {
           sprite_url: detailData.sprites?.front_default || '',
           stats: detailData.stats,
           types: detailData.types,
-          abilities: detailData.abilities
+          abilities: detailData.abilities,
         };
       } catch (error) {
-        console.error(`❌ Failed to fetch ${pokemon.name}: ${error instanceof Error ? error.message : String(error)}`);
+        console.error(
+          `❌ Failed to fetch ${pokemon.name}: ${error instanceof Error ? error.message : String(error)}`
+        );
         return null;
       }
     });
 
     const results = await Promise.all(pokemonPromises);
-    const validResults = results.filter((result): result is NonNullable<typeof result> => result !== null);
+    const validResults = results.filter(
+      (result): result is NonNullable<typeof result> => result !== null
+    );
 
     // Insert data in transaction for performance
     const transaction = this.db.transaction(() => {
@@ -298,7 +319,9 @@ class PokemonDataIngestion {
 
         // Insert Abilities
         for (const ability of pokemon.abilities) {
-          const abilityId = parseInt(ability.ability.url.split('/').slice(-2, -1)[0]);
+          const abilityId = parseInt(
+            ability.ability.url.split('/').slice(-2, -1)[0]
+          );
           insertAbility.run(abilityId, ability.ability.name);
           insertPokemonAbility.run(
             pokemon.id,
@@ -316,26 +339,30 @@ class PokemonDataIngestion {
 
   async ingestAllPokemon(limit: number | null = null): Promise<void> {
     console.log('🔄 Starting Pokemon data ingestion...');
-    
+
     // First, ingest types
     await this.ingestTypes();
-    
+
     // Get Pokemon list
-    const pokemonListUrl = limit 
+    const pokemonListUrl = limit
       ? `${this.baseUrl}/pokemon?limit=${limit}`
       : `${this.baseUrl}/pokemon?limit=1500`; // Covers most Pokemon
-    
-    const pokemonList = await this.fetchWithRetry(pokemonListUrl) as PokemonListResponse;
-    
+
+    const pokemonList = (await this.fetchWithRetry(
+      pokemonListUrl
+    )) as PokemonListResponse;
+
     // Process in batches
     for (let i = 0; i < pokemonList.results.length; i += this.batchSize) {
       const batch = pokemonList.results.slice(i, i + this.batchSize);
       const count = await this.ingestPokemonBatch(batch);
-      console.log(`✅ Processed batch ${Math.floor(i / this.batchSize) + 1}: ${count} Pokemon`);
+      console.log(
+        `✅ Processed batch ${Math.floor(i / this.batchSize) + 1}: ${count} Pokemon`
+      );
       // Add a small delay between batches to avoid rate limiting
       await this.delay(1000);
     }
-    
+
     console.log('✅ Pokemon data ingestion complete');
   }
 
@@ -345,12 +372,22 @@ class PokemonDataIngestion {
     }
 
     const stats = {
-      pokemon: (this.db.prepare('SELECT COUNT(*) as count FROM pokemon').get() as Stats).count,
-      types: (this.db.prepare('SELECT COUNT(*) as count FROM types').get() as Stats).count,
-      abilities: (this.db.prepare('SELECT COUNT(*) as count FROM abilities').get() as Stats).count,
-      moves: (this.db.prepare('SELECT COUNT(*) as count FROM moves').get() as Stats).count
+      pokemon: (
+        this.db.prepare('SELECT COUNT(*) as count FROM pokemon').get() as Stats
+      ).count,
+      types: (
+        this.db.prepare('SELECT COUNT(*) as count FROM types').get() as Stats
+      ).count,
+      abilities: (
+        this.db
+          .prepare('SELECT COUNT(*) as count FROM abilities')
+          .get() as Stats
+      ).count,
+      moves: (
+        this.db.prepare('SELECT COUNT(*) as count FROM moves').get() as Stats
+      ).count,
     };
-    
+
     console.log('\n📊 Database Statistics:');
     console.log(`Total Pokemon: ${stats.pokemon}`);
     console.log(`Total Types: ${stats.types}`);
@@ -359,24 +396,34 @@ class PokemonDataIngestion {
   }
 
   getPokemonByType(typeName: string): Array<{ id: number; name: string }> {
-    return this.db.prepare(`
+    return this.db
+      .prepare(
+        `
       SELECT p.id, p.name
       FROM pokemon p
       JOIN pokemon_types pt ON p.id = pt.pokemon_id
       JOIN types t ON pt.type_id = t.id
       WHERE LOWER(t.name) = LOWER(?)
       ORDER BY p.id
-    `).all(typeName) as Array<{ id: number; name: string }>;
+    `
+      )
+      .all(typeName) as Array<{ id: number; name: string }>;
   }
 
-  getPokemonStats(pokemonName: string): Array<{ stat_name: string; base_stat: number }> {
-    return this.db.prepare(`
+  getPokemonStats(
+    pokemonName: string
+  ): Array<{ stat_name: string; base_stat: number }> {
+    return this.db
+      .prepare(
+        `
       SELECT s.stat_name, s.base_stat
       FROM stats s
       JOIN pokemon p ON s.pokemon_id = p.id
       WHERE LOWER(p.name) = LOWER(?)
       ORDER BY s.stat_name
-    `).all(pokemonName) as Array<{ stat_name: string; base_stat: number }>;
+    `
+      )
+      .all(pokemonName) as Array<{ stat_name: string; base_stat: number }>;
   }
 
   close(): void {
@@ -390,7 +437,10 @@ async function main(): Promise<void> {
     await ingestion.ingestAllPokemon();
     ingestion.printStats();
   } catch (error) {
-    console.error('❌ Error during ingestion:', error instanceof Error ? error.message : String(error));
+    console.error(
+      '❌ Error during ingestion:',
+      error instanceof Error ? error.message : String(error)
+    );
   } finally {
     ingestion.close();
   }

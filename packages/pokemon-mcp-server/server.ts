@@ -7,7 +7,12 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema, ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  ErrorCode,
+  McpError,
+} from '@modelcontextprotocol/sdk/types.js';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { promises as fs } from 'fs';
@@ -46,7 +51,14 @@ interface SearchArgs {
 }
 
 interface StrongestArgs {
-  criteria: 'total_stats' | 'attack' | 'defense' | 'hp' | 'speed' | 'sp_attack' | 'sp_defense';
+  criteria:
+    | 'total_stats'
+    | 'attack'
+    | 'defense'
+    | 'hp'
+    | 'speed'
+    | 'sp_attack'
+    | 'sp_defense';
   type?: string;
   generation?: number;
   limit?: number;
@@ -60,10 +72,10 @@ class PokemonMCPServer {
     // Ensure data directory exists
     const dataDir = path.resolve(process.cwd(), '../../data');
     fs.mkdir(dataDir, { recursive: true }).catch(console.error);
-    
+
     const dbPath = path.join(dataDir, 'pokemon.sqlite');
     this.db = new Database(dbPath);
-    
+
     this.server = new Server(
       {
         name: 'pokemon-server',
@@ -75,7 +87,7 @@ class PokemonMCPServer {
         },
       }
     );
-    
+
     this.setupToolHandlers();
     this.setupErrorHandling();
   }
@@ -87,43 +99,45 @@ class PokemonMCPServer {
         tools: [
           {
             name: 'get_pokemon',
-            description: 'Get detailed information about a specific Pokemon by name or ID',
+            description:
+              'Get detailed information about a specific Pokemon by name or ID',
             inputSchema: {
               type: 'object',
               properties: {
                 identifier: {
                   type: 'string',
-                  description: 'Pokemon name or ID number'
-                }
+                  description: 'Pokemon name or ID number',
+                },
               },
-              required: ['identifier']
-            }
+              required: ['identifier'],
+            },
           },
           {
             name: 'search_pokemon',
-            description: 'Search Pokemon by various criteria (type, generation, stats)',
+            description:
+              'Search Pokemon by various criteria (type, generation, stats)',
             inputSchema: {
               type: 'object',
               properties: {
                 type: {
                   type: 'string',
-                  description: 'Pokemon type (e.g., fire, water, electric)'
+                  description: 'Pokemon type (e.g., fire, water, electric)',
                 },
                 generation: {
                   type: 'integer',
-                  description: 'Pokemon generation (1-9)'
+                  description: 'Pokemon generation (1-9)',
                 },
                 min_stat: {
                   type: 'integer',
-                  description: 'Minimum base stat total'
+                  description: 'Minimum base stat total',
                 },
                 limit: {
                   type: 'integer',
                   description: 'Maximum number of results (default: 20)',
-                  default: 20
-                }
-              }
-            }
+                  default: 20,
+                },
+              },
+            },
           },
           {
             name: 'compare_pokemon',
@@ -133,35 +147,36 @@ class PokemonMCPServer {
               properties: {
                 pokemon1: {
                   type: 'string',
-                  description: 'First Pokemon name or ID'
+                  description: 'First Pokemon name or ID',
                 },
                 pokemon2: {
                   type: 'string',
-                  description: 'Second Pokemon name or ID'
-                }
+                  description: 'Second Pokemon name or ID',
+                },
               },
-              required: ['pokemon1', 'pokemon2']
-            }
+              required: ['pokemon1', 'pokemon2'],
+            },
           },
           {
             name: 'get_type_effectiveness',
-            description: 'Get type matchup information and Pokemon of specific types',
+            description:
+              'Get type matchup information and Pokemon of specific types',
             inputSchema: {
               type: 'object',
               properties: {
                 type: {
                   type: 'string',
                   description: 'Pokemon type to analyze',
-                  required: true
+                  required: true,
                 },
                 include_pokemon: {
                   type: 'boolean',
                   description: 'Include list of Pokemon with this type',
-                  default: false
-                }
+                  default: false,
+                },
               },
-              required: ['type']
-            }
+              required: ['type'],
+            },
           },
           {
             name: 'get_pokemon_stats',
@@ -171,11 +186,11 @@ class PokemonMCPServer {
               properties: {
                 identifier: {
                   type: 'string',
-                  description: 'Pokemon name or ID'
-                }
+                  description: 'Pokemon name or ID',
+                },
               },
-              required: ['identifier']
-            }
+              required: ['identifier'],
+            },
           },
           {
             name: 'strongest_pokemon',
@@ -185,27 +200,35 @@ class PokemonMCPServer {
               properties: {
                 criteria: {
                   type: 'string',
-                  enum: ['total_stats', 'attack', 'defense', 'hp', 'speed', 'sp_attack', 'sp_defense'],
-                  description: 'Criteria for ranking Pokemon strength'
+                  enum: [
+                    'total_stats',
+                    'attack',
+                    'defense',
+                    'hp',
+                    'speed',
+                    'sp_attack',
+                    'sp_defense',
+                  ],
+                  description: 'Criteria for ranking Pokemon strength',
                 },
                 type: {
                   type: 'string',
-                  description: 'Filter by Pokemon type (optional)'
+                  description: 'Filter by Pokemon type (optional)',
                 },
                 generation: {
                   type: 'integer',
-                  description: 'Filter by generation (optional)'
+                  description: 'Filter by generation (optional)',
                 },
                 limit: {
                   type: 'integer',
                   description: 'Number of results (default: 10)',
-                  default: 10
-                }
+                  default: 10,
+                },
               },
-              required: ['criteria']
-            }
-          }
-        ]
+              required: ['criteria'],
+            },
+          },
+        ],
       };
     });
 
@@ -225,51 +248,72 @@ class PokemonMCPServer {
             }
             return await this.getPokemon(args.identifier);
           }
-          
+
           case 'search_pokemon': {
             if (!this.isSearchArgs(args)) {
-              throw new McpError(ErrorCode.InvalidParams, 'Invalid search arguments');
+              throw new McpError(
+                ErrorCode.InvalidParams,
+                'Invalid search arguments'
+              );
             }
             return await this.searchPokemon(args);
           }
-          
+
           case 'compare_pokemon': {
-            if (typeof args.pokemon1 !== 'string' || typeof args.pokemon2 !== 'string') {
-              throw new McpError(ErrorCode.InvalidParams, 'Invalid Pokemon identifiers');
+            if (
+              typeof args.pokemon1 !== 'string' ||
+              typeof args.pokemon2 !== 'string'
+            ) {
+              throw new McpError(
+                ErrorCode.InvalidParams,
+                'Invalid Pokemon identifiers'
+              );
             }
             return await this.comparePokemon(args.pokemon1, args.pokemon2);
           }
-          
+
           case 'get_type_effectiveness': {
             if (typeof args.type !== 'string') {
               throw new McpError(ErrorCode.InvalidParams, 'Invalid type');
             }
-            const includePokemon = args.include_pokemon === undefined ? false : Boolean(args.include_pokemon);
+            const includePokemon =
+              args.include_pokemon === undefined
+                ? false
+                : Boolean(args.include_pokemon);
             return await this.getTypeEffectiveness(args.type, includePokemon);
           }
-          
+
           case 'get_pokemon_stats': {
             if (typeof args.identifier !== 'string') {
               throw new McpError(ErrorCode.InvalidParams, 'Invalid identifier');
             }
             return await this.getPokemonStats(args.identifier);
           }
-          
+
           case 'strongest_pokemon': {
             if (!this.isStrongestArgs(args)) {
-              throw new McpError(ErrorCode.InvalidParams, 'Invalid strongest arguments');
+              throw new McpError(
+                ErrorCode.InvalidParams,
+                'Invalid strongest arguments'
+              );
             }
             return await this.getStrongestPokemon(args);
           }
-          
+
           default:
-            throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+            throw new McpError(
+              ErrorCode.MethodNotFound,
+              `Unknown tool: ${name}`
+            );
         }
       } catch (error) {
         if (error instanceof McpError) {
           throw error;
         }
-        throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`);
+        throw new McpError(
+          ErrorCode.InternalError,
+          `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     });
   }
@@ -279,8 +323,10 @@ class PokemonMCPServer {
     const searchArgs = args as SearchArgs;
     return (
       (searchArgs.type === undefined || typeof searchArgs.type === 'string') &&
-      (searchArgs.generation === undefined || typeof searchArgs.generation === 'number') &&
-      (searchArgs.min_stat === undefined || typeof searchArgs.min_stat === 'number') &&
+      (searchArgs.generation === undefined ||
+        typeof searchArgs.generation === 'number') &&
+      (searchArgs.min_stat === undefined ||
+        typeof searchArgs.min_stat === 'number') &&
       (searchArgs.limit === undefined || typeof searchArgs.limit === 'number')
     );
   }
@@ -290,74 +336,103 @@ class PokemonMCPServer {
     const strongestArgs = args as StrongestArgs;
     return (
       typeof strongestArgs.criteria === 'string' &&
-      ['total_stats', 'attack', 'defense', 'hp', 'speed', 'sp_attack', 'sp_defense'].includes(strongestArgs.criteria) &&
-      (strongestArgs.type === undefined || typeof strongestArgs.type === 'string') &&
-      (strongestArgs.generation === undefined || typeof strongestArgs.generation === 'number') &&
-      (strongestArgs.limit === undefined || typeof strongestArgs.limit === 'number')
+      [
+        'total_stats',
+        'attack',
+        'defense',
+        'hp',
+        'speed',
+        'sp_attack',
+        'sp_defense',
+      ].includes(strongestArgs.criteria) &&
+      (strongestArgs.type === undefined ||
+        typeof strongestArgs.type === 'string') &&
+      (strongestArgs.generation === undefined ||
+        typeof strongestArgs.generation === 'number') &&
+      (strongestArgs.limit === undefined ||
+        typeof strongestArgs.limit === 'number')
     );
   }
 
   private async getPokemon(identifier: string) {
     const isNumeric = /^\d+$/.test(identifier);
-    const query = isNumeric 
+    const query = isNumeric
       ? 'SELECT * FROM pokemon WHERE id = ?'
       : 'SELECT * FROM pokemon WHERE LOWER(name) = LOWER(?)';
-    
-    const pokemon = this.db.prepare(query).get(identifier) as Pokemon | undefined;
-    
+
+    const pokemon = this.db.prepare(query).get(identifier) as
+      | Pokemon
+      | undefined;
+
     if (!pokemon) {
       return {
-        content: [{
-          type: 'text',
-          text: `Pokemon "${identifier}" not found.`
-        }]
+        content: [
+          {
+            type: 'text',
+            text: `Pokemon "${identifier}" not found.`,
+          },
+        ],
       };
     }
 
     // Get additional details
-    const stats = this.db.prepare(`
+    const stats = this.db
+      .prepare(
+        `
       SELECT stat_name, base_stat, effort 
       FROM stats 
       WHERE pokemon_id = ?
-    `).all(pokemon.id) as Stat[];
+    `
+      )
+      .all(pokemon.id) as Stat[];
 
-    const types = this.db.prepare(`
+    const types = this.db
+      .prepare(
+        `
       SELECT t.name 
       FROM types t
       JOIN pokemon_types pt ON t.id = pt.type_id
       WHERE pt.pokemon_id = ?
       ORDER BY pt.slot
-    `).all(pokemon.id) as Type[];
+    `
+      )
+      .all(pokemon.id) as Type[];
 
-    const abilities = this.db.prepare(`
+    const abilities = this.db
+      .prepare(
+        `
       SELECT a.name, pa.is_hidden
       FROM abilities a
       JOIN pokemon_abilities pa ON a.id = pa.ability_id
       WHERE pa.pokemon_id = ?
       ORDER BY pa.slot
-    `).all(pokemon.id) as Ability[];
+    `
+      )
+      .all(pokemon.id) as Ability[];
 
     const totalStats = stats.reduce((sum, stat) => sum + stat.base_stat, 0);
 
     return {
-      content: [{
-        type: 'text',
-        text: `# ${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} (#${pokemon.id})
+      content: [
+        {
+          type: 'text',
+          text: `# ${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} (#${pokemon.id})
 
 **Basic Info:**
 - Generation: ${pokemon.generation}
-- Height: ${pokemon.height/10}m
-- Weight: ${pokemon.weight/10}kg
+- Height: ${pokemon.height / 10}m
+- Weight: ${pokemon.weight / 10}kg
 - Base Experience: ${pokemon.base_experience}
 
-**Types:** ${types.map(t => t.name).join(', ')}
+**Types:** ${types.map((t) => t.name).join(', ')}
 
-**Abilities:** ${abilities.map(a => a.name + (a.is_hidden ? ' (Hidden)' : '')).join(', ')}
+**Abilities:** ${abilities.map((a) => a.name + (a.is_hidden ? ' (Hidden)' : '')).join(', ')}
 
 **Base Stats:**
-${stats.map(s => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
-- **Total: ${totalStats}**`
-      }]
+${stats.map((s) => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
+- **Total: ${totalStats}**`,
+        },
+      ],
     };
   }
 
@@ -369,7 +444,7 @@ ${stats.map(s => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
       JOIN pokemon_types pt ON p.id = pt.pokemon_id
       JOIN types t ON pt.type_id = t.id
     `;
-    
+
     const conditions: string[] = [];
     const params: (string | number)[] = [];
 
@@ -404,7 +479,7 @@ ${stats.map(s => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
     query += ` GROUP BY p.id, p.name, p.generation
                ORDER BY p.id
                LIMIT ?`;
-    
+
     params.push(args.limit || 20);
 
     const results = this.db.prepare(query).all(...params) as Array<{
@@ -416,25 +491,32 @@ ${stats.map(s => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
 
     if (results.length === 0) {
       return {
-        content: [{
-          type: 'text',
-          text: 'No Pokemon found matching the specified criteria.'
-        }]
+        content: [
+          {
+            type: 'text',
+            text: 'No Pokemon found matching the specified criteria.',
+          },
+        ],
       };
     }
 
     const resultText = `# Search Results (${results.length} found)
 
-${results.map(p => 
-  `**${p.name.charAt(0).toUpperCase() + p.name.slice(1)}** (#${p.id}) - Gen ${p.generation}
+${results
+  .map(
+    (p) =>
+      `**${p.name.charAt(0).toUpperCase() + p.name.slice(1)}** (#${p.id}) - Gen ${p.generation}
   Types: ${p.types}`
-).join('\n\n')}`;
+  )
+  .join('\n\n')}`;
 
     return {
-      content: [{
-        type: 'text',
-        text: resultText
-      }]
+      content: [
+        {
+          type: 'text',
+          text: resultText,
+        },
+      ],
     };
   }
 
@@ -444,10 +526,12 @@ ${results.map(p =>
 
     if (!pokemon1 || !pokemon2) {
       return {
-        content: [{
-          type: 'text',
-          text: `One or both Pokemon not found: "${identifier1}", "${identifier2}"`
-        }]
+        content: [
+          {
+            type: 'text',
+            text: `One or both Pokemon not found: "${identifier1}", "${identifier2}"`,
+          },
+        ],
       };
     }
 
@@ -462,47 +546,57 @@ ${results.map(p =>
 |-----------|${'-'.repeat(pokemon1.name.length)}|${'-'.repeat(pokemon2.name.length)}|
 | ID | #${pokemon1.id} | #${pokemon2.id} |
 | Generation | ${pokemon1.generation} | ${pokemon2.generation} |
-| Height | ${pokemon1.height/10}m | ${pokemon2.height/10}m |
-| Weight | ${pokemon1.weight/10}kg | ${pokemon2.weight/10}kg |
+| Height | ${pokemon1.height / 10}m | ${pokemon2.height / 10}m |
+| Weight | ${pokemon1.weight / 10}kg | ${pokemon2.weight / 10}kg |
 
 ## Stat Comparison
 
 | Stat | ${pokemon1.name} | ${pokemon2.name} | Difference |
 |------|${'-'.repeat(pokemon1.name.length)}|${'-'.repeat(pokemon2.name.length)}|------------|
-${stats1.map(stat => {
-  const stat2 = stats2.find(s => s.stat_name === stat.stat_name);
-  const diff = stat.base_stat - (stat2?.base_stat ?? 0);
-  const diffStr = diff > 0 ? `+${diff}` : diff.toString();
-  return `| ${stat.stat_name} | ${stat.base_stat} | ${stat2?.base_stat ?? 0} | ${diffStr} |`;
-}).join('\n')}
+${stats1
+  .map((stat) => {
+    const stat2 = stats2.find((s) => s.stat_name === stat.stat_name);
+    const diff = stat.base_stat - (stat2?.base_stat ?? 0);
+    const diffStr = diff > 0 ? `+${diff}` : diff.toString();
+    return `| ${stat.stat_name} | ${stat.base_stat} | ${stat2?.base_stat ?? 0} | ${diffStr} |`;
+  })
+  .join('\n')}
 
 **Total Stats:** ${stats1.reduce((sum, s) => sum + s.base_stat, 0)} vs ${stats2.reduce((sum, s) => sum + s.base_stat, 0)}`;
 
     return {
-      content: [{
-        type: 'text',
-        text: comparison
-      }]
+      content: [
+        {
+          type: 'text',
+          text: comparison,
+        },
+      ],
     };
   }
 
   private async getTypeEffectiveness(type: string, includePokemon = false) {
     // Check if type exists
-    const typeExists = this.db.prepare('SELECT id FROM types WHERE LOWER(name) = LOWER(?)').get(type);
-    
+    const typeExists = this.db
+      .prepare('SELECT id FROM types WHERE LOWER(name) = LOWER(?)')
+      .get(type);
+
     if (!typeExists) {
       return {
-        content: [{
-          type: 'text',
-          text: `Type "${type}" not found.`
-        }]
+        content: [
+          {
+            type: 'text',
+            text: `Type "${type}" not found.`,
+          },
+        ],
       };
     }
 
     let result = `# ${type.charAt(0).toUpperCase() + type.slice(1)} Type Analysis\n\n`;
 
     if (includePokemon) {
-      const pokemon = this.db.prepare(`
+      const pokemon = this.db
+        .prepare(
+          `
         SELECT p.name, p.id, p.generation
         FROM pokemon p
         JOIN pokemon_types pt ON p.id = pt.pokemon_id
@@ -510,29 +604,37 @@ ${stats1.map(stat => {
         WHERE LOWER(t.name) = LOWER(?)
         ORDER BY p.id
         LIMIT 20
-      `).all(type) as Array<{ name: string; id: number; generation: number }>;
+      `
+        )
+        .all(type) as Array<{ name: string; id: number; generation: number }>;
 
       result += `## Pokemon with ${type} type (showing first 20):\n\n`;
-      result += pokemon.map(p => `- **${p.name}** (#${p.id}) - Gen ${p.generation}`).join('\n');
+      result += pokemon
+        .map((p) => `- **${p.name}** (#${p.id}) - Gen ${p.generation}`)
+        .join('\n');
     }
 
     return {
-      content: [{
-        type: 'text',
-        text: result
-      }]
+      content: [
+        {
+          type: 'text',
+          text: result,
+        },
+      ],
     };
   }
 
   private async getPokemonStats(identifier: string) {
     const pokemon = this.getPokemonData(identifier);
-    
+
     if (!pokemon) {
       return {
-        content: [{
-          type: 'text',
-          text: `Pokemon "${identifier}" not found.`
-        }]
+        content: [
+          {
+            type: 'text',
+            text: `Pokemon "${identifier}" not found.`,
+          },
+        ],
       };
     }
 
@@ -542,27 +644,31 @@ ${stats1.map(stat => {
     const statsText = `# ${pokemon.name} - Detailed Stats
 
 ## Base Stats
-${stats.map(s => `**${s.stat_name}:** ${s.base_stat} (EV: ${s.effort})`).join('\n')}
+${stats.map((s) => `**${s.stat_name}:** ${s.base_stat} (EV: ${s.effort})`).join('\n')}
 
 **Total Base Stats:** ${totalStats}
 
 ## Stat Distribution
-${stats.map(s => {
-  const percentage = ((s.base_stat / totalStats) * 100).toFixed(1);
-  return `- ${s.stat_name}: ${percentage}% of total stats`;
-}).join('\n')}`;
+${stats
+  .map((s) => {
+    const percentage = ((s.base_stat / totalStats) * 100).toFixed(1);
+    return `- ${s.stat_name}: ${percentage}% of total stats`;
+  })
+  .join('\n')}`;
 
     return {
-      content: [{
-        type: 'text',
-        text: statsText
-      }]
+      content: [
+        {
+          type: 'text',
+          text: statsText,
+        },
+      ],
     };
   }
 
   private async getStrongestPokemon(args: StrongestArgs) {
     const { criteria, type, generation, limit = 10 } = args;
-    
+
     let statColumn: string;
     switch (criteria) {
       case 'total_stats':
@@ -626,30 +732,37 @@ ${stats.map(s => {
 
     const resultText = `# Strongest Pokemon by ${criteria.replace('_', ' ')}
 
-${results.map((p, index) => 
-  `${index + 1}. **${p.name}** (#${p.id}) - Gen ${p.generation}
+${results
+  .map(
+    (p, index) =>
+      `${index + 1}. **${p.name}** (#${p.id}) - Gen ${p.generation}
    ${criteria.replace('_', ' ')}: ${p.stat_value}`
-).join('\n\n')}`;
+  )
+  .join('\n\n')}`;
 
     return {
-      content: [{
-        type: 'text',
-        text: resultText
-      }]
+      content: [
+        {
+          type: 'text',
+          text: resultText,
+        },
+      ],
     };
   }
 
   private getPokemonData(identifier: string): Pokemon | undefined {
     const isNumeric = /^\d+$/.test(identifier);
-    const query = isNumeric 
+    const query = isNumeric
       ? 'SELECT * FROM pokemon WHERE id = ?'
       : 'SELECT * FROM pokemon WHERE LOWER(name) = LOWER(?)';
-    
+
     return this.db.prepare(query).get(identifier) as Pokemon | undefined;
   }
 
   private getPokemonStatsData(pokemonId: number): Stat[] {
-    return this.db.prepare(`
+    return this.db
+      .prepare(
+        `
       SELECT stat_name, base_stat, effort 
       FROM stats 
       WHERE pokemon_id = ?
@@ -662,7 +775,9 @@ ${results.map((p, index) =>
           WHEN 'special-defense' THEN 5
           WHEN 'speed' THEN 6
         END
-    `).all(pokemonId) as Stat[];
+    `
+      )
+      .all(pokemonId) as Stat[];
   }
 
   private setupErrorHandling(): void {
@@ -692,4 +807,4 @@ const server = new PokemonMCPServer();
 server.run().catch((error) => {
   console.error('Failed to start server:', error);
   process.exit(1);
-}); 
+});
