@@ -80,7 +80,7 @@ describe('Pokemon Data Ingestion', () => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
 
-      CREATE TABLE IF NOT EXISTS pokemon_stats (
+      CREATE TABLE IF NOT EXISTS stats (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         pokemon_id INTEGER,
         stat_name TEXT,
@@ -105,7 +105,7 @@ describe('Pokemon Data Ingestion', () => {
       );
 
       CREATE TABLE IF NOT EXISTS types (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY,
         name TEXT UNIQUE NOT NULL
       );
     `);
@@ -124,7 +124,7 @@ describe('Pokemon Data Ingestion', () => {
     // Clear all tables before each test
     db.exec('DELETE FROM pokemon_abilities');
     db.exec('DELETE FROM pokemon_types');
-    db.exec('DELETE FROM pokemon_stats');
+    db.exec('DELETE FROM stats');
     db.exec('DELETE FROM pokemon');
     db.exec('DELETE FROM types');
 
@@ -140,7 +140,7 @@ describe('Pokemon Data Ingestion', () => {
       const tableNames = tables.map((t) => t.name);
 
       expect(tableNames).toContain('pokemon');
-      expect(tableNames).toContain('pokemon_stats');
+      expect(tableNames).toContain('stats');
       expect(tableNames).toContain('pokemon_types');
       expect(tableNames).toContain('pokemon_abilities');
       expect(tableNames).toContain('types');
@@ -215,7 +215,7 @@ describe('Pokemon Data Ingestion', () => {
       ];
 
       const insertStat = db.prepare(`
-        INSERT INTO pokemon_stats (pokemon_id, stat_name, base_stat, effort)
+        INSERT INTO stats (pokemon_id, stat_name, base_stat, effort)
         VALUES (?, ?, ?, ?)
       `);
 
@@ -230,7 +230,7 @@ describe('Pokemon Data Ingestion', () => {
       });
 
       const retrievedStats = db
-        .prepare('SELECT * FROM pokemon_stats WHERE pokemon_id = 1')
+        .prepare('SELECT * FROM stats WHERE pokemon_id = 1')
         .all();
       expect(retrievedStats).toHaveLength(2);
     });
@@ -287,30 +287,35 @@ describe('Pokemon Data Ingestion', () => {
   describe('Data Validation', () => {
     it('should handle missing required fields', () => {
       const insertPokemon = db.prepare(`
-        INSERT INTO pokemon (id, name)
-        VALUES (?, ?)
+        INSERT INTO pokemon (name)
+        VALUES (?)
       `);
 
+      // Name is NOT NULL, so this should throw
       expect(() => {
-        insertPokemon.run(null, 'test'); // ID cannot be null for PRIMARY KEY
+        insertPokemon.run(null);
       }).toThrow();
     });
 
     it('should validate foreign key constraints', () => {
+      // First insert a valid pokemon
+      const insertPokemon = db.prepare(`
+        INSERT INTO pokemon (id, name, height, weight, base_experience, generation, species_url, sprite_url)
+        VALUES (1, 'test-pokemon', 7, 69, 64, 1, 'test', 'test')
+      `);
+      insertPokemon.run();
+
       const insertStat = db.prepare(`
-        INSERT INTO pokemon_stats (pokemon_id, stat_name, base_stat, effort)
+        INSERT INTO stats (pokemon_id, stat_name, base_stat, effort)
         VALUES (?, ?, ?, ?)
       `);
 
-      // This should work without foreign key constraints enabled by default
-      // but let's test the data structure
-      const result = insertStat.run(999, 'hp', 50, 0);
+      // This should work with a valid foreign key
+      const result = insertStat.run(1, 'hp', 50, 0);
       expect(result.changes).toBe(1);
 
       // Verify the stat was inserted
-      const stat = db
-        .prepare('SELECT * FROM pokemon_stats WHERE pokemon_id = 999')
-        .get();
+      const stat = db.prepare('SELECT * FROM stats WHERE pokemon_id = 1').get();
       expect(stat).toBeDefined();
     });
   });

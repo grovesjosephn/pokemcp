@@ -105,45 +105,6 @@ Dependencies are managed via PNPM catalog for version consistency:
 - Updates dependency versions in one place, applies across all packages
 - Prevents version conflicts between packages
 
-## Docker Containerization
-
-Each package can be run individually in Docker containers:
-
-### Individual Container Commands
-
-```bash
-# Build and run ingestion service
-docker build -f packages/pokemon-mcp-ingestion/Dockerfile -t pokemon-ingestion .
-docker run --rm -v pokemon_data:/app/data pokemon-ingestion
-
-# Build and run server
-docker build -f packages/pokemon-mcp-server/Dockerfile -t pokemon-server .
-docker run --rm -v pokemon_data:/app/data -it pokemon-server
-```
-
-### Docker Compose Commands
-
-```bash
-# Run ingestion to populate database
-docker-compose --profile ingestion up
-
-# Run server only
-docker-compose --profile server up
-
-# Development mode with hot reload
-docker-compose --profile dev up
-
-# Run both services
-docker-compose --profile ingestion --profile server up
-```
-
-### Key Features
-
-- **Isolated execution**: Each service runs in its own container
-- **Shared data volume**: SQLite database persisted in `pokemon_data` volume
-- **Development support**: Hot reload with volume mounting
-- **Profile-based deployment**: Choose which services to run
-
 ## Claude Desktop Integration
 
 ### Option 1: NPM Package (Recommended)
@@ -212,3 +173,8 @@ For active development with hot reload:
   }
 }
 ```
+
+## Development Approach
+
+- **Test-Driven Development (TDD)**:
+  - Prefer the TDD approach, tests should be written first before any code changes
