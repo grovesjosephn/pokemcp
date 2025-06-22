@@ -1,8 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Database from 'better-sqlite3';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { TestDatabase } from './tests/helpers/testDatabase.js';
 
 // Import the server types and functions
 interface Pokemon {
@@ -14,6 +12,7 @@ interface Pokemon {
   generation: number;
   species_url: string;
   sprite_url: string;
+  created_at?: string;
 }
 
 interface Stat {
@@ -22,238 +21,19 @@ interface Stat {
   effort: number;
 }
 
-interface Type {
-  name: string;
-}
-
-interface Ability {
-  name: string;
-  is_hidden: boolean;
-}
-
 describe('Pokemon MCP Server', () => {
+  let testDb: TestDatabase;
   let db: Database.Database;
-  let testDbPath: string;
 
   beforeAll(async () => {
-    testDbPath = path.join(process.cwd(), 'test-pokemon.sqlite');
-
-    // Ensure test database is clean
-    try {
-      await fs.unlink(testDbPath);
-    } catch {
-      // File doesn't exist, that's fine
-    }
-
-    db = new Database(testDbPath);
-
-    // Create test schema matching the actual database structure
-    db.exec(`
-      CREATE TABLE pokemon (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        height INTEGER,
-        weight INTEGER,
-        base_experience INTEGER,
-        generation INTEGER,
-        species_url TEXT,
-        sprite_url TEXT
-      );
-
-      CREATE TABLE stats (
-        pokemon_id INTEGER,
-        stat_name TEXT,
-        base_stat INTEGER,
-        effort INTEGER,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id)
-      );
-
-      CREATE TABLE types (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL
-      );
-
-      CREATE TABLE pokemon_types (
-        pokemon_id INTEGER,
-        type_id INTEGER,
-        slot INTEGER,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id),
-        FOREIGN KEY (type_id) REFERENCES types (id)
-      );
-
-      CREATE TABLE abilities (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL
-      );
-
-      CREATE TABLE pokemon_abilities (
-        pokemon_id INTEGER,
-        ability_id INTEGER,
-        is_hidden INTEGER,
-        slot INTEGER,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id),
-        FOREIGN KEY (ability_id) REFERENCES abilities (id)
-      );
-    `);
-
-    // Insert test data
-    const pokemon = [
-      {
-        id: 1,
-        name: 'bulbasaur',
-        height: 7,
-        weight: 69,
-        base_experience: 64,
-        generation: 1,
-        species_url: 'test',
-        sprite_url: 'test',
-      },
-      {
-        id: 25,
-        name: 'pikachu',
-        height: 4,
-        weight: 60,
-        base_experience: 112,
-        generation: 1,
-        species_url: 'test',
-        sprite_url: 'test',
-      },
-      {
-        id: 150,
-        name: 'mewtwo',
-        height: 20,
-        weight: 1220,
-        base_experience: 340,
-        generation: 1,
-        species_url: 'test',
-        sprite_url: 'test',
-      },
-    ];
-
-    const insertPokemon = db.prepare(
-      'INSERT INTO pokemon VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    );
-    pokemon.forEach((p) =>
-      insertPokemon.run(
-        p.id,
-        p.name,
-        p.height,
-        p.weight,
-        p.base_experience,
-        p.generation,
-        p.species_url,
-        p.sprite_url
-      )
-    );
-
-    // Insert test stats - using complete stat sets for realistic testing
-    const stats = [
-      // Bulbasaur stats
-      { pokemon_id: 1, stat_name: 'hp', base_stat: 45, effort: 0 },
-      { pokemon_id: 1, stat_name: 'attack', base_stat: 49, effort: 0 },
-      { pokemon_id: 1, stat_name: 'defense', base_stat: 49, effort: 0 },
-      { pokemon_id: 1, stat_name: 'special-attack', base_stat: 65, effort: 1 },
-      { pokemon_id: 1, stat_name: 'special-defense', base_stat: 65, effort: 0 },
-      { pokemon_id: 1, stat_name: 'speed', base_stat: 45, effort: 0 },
-      // Pikachu stats
-      { pokemon_id: 25, stat_name: 'hp', base_stat: 35, effort: 0 },
-      { pokemon_id: 25, stat_name: 'attack', base_stat: 55, effort: 0 },
-      { pokemon_id: 25, stat_name: 'defense', base_stat: 40, effort: 0 },
-      { pokemon_id: 25, stat_name: 'special-attack', base_stat: 50, effort: 0 },
-      {
-        pokemon_id: 25,
-        stat_name: 'special-defense',
-        base_stat: 50,
-        effort: 0,
-      },
-      { pokemon_id: 25, stat_name: 'speed', base_stat: 90, effort: 2 },
-      // Mewtwo stats
-      { pokemon_id: 150, stat_name: 'hp', base_stat: 106, effort: 0 },
-      { pokemon_id: 150, stat_name: 'attack', base_stat: 110, effort: 0 },
-      { pokemon_id: 150, stat_name: 'defense', base_stat: 90, effort: 0 },
-      {
-        pokemon_id: 150,
-        stat_name: 'special-attack',
-        base_stat: 154,
-        effort: 3,
-      },
-      {
-        pokemon_id: 150,
-        stat_name: 'special-defense',
-        base_stat: 90,
-        effort: 0,
-      },
-      { pokemon_id: 150, stat_name: 'speed', base_stat: 130, effort: 0 },
-    ];
-
-    const insertStat = db.prepare('INSERT INTO stats VALUES (?, ?, ?, ?)');
-    stats.forEach((s) =>
-      insertStat.run(s.pokemon_id, s.stat_name, s.base_stat, s.effort)
-    );
-
-    // Insert types first
-    const typeData = [
-      { id: 1, name: 'grass' },
-      { id: 2, name: 'poison' },
-      { id: 3, name: 'electric' },
-      { id: 4, name: 'psychic' },
-    ];
-
-    const insertTypeData = db.prepare('INSERT INTO types VALUES (?, ?)');
-    typeData.forEach((t) => insertTypeData.run(t.id, t.name));
-
-    // Insert pokemon-type relationships
-    const pokemonTypes = [
-      { pokemon_id: 1, type_id: 1, slot: 1 }, // bulbasaur - grass
-      { pokemon_id: 1, type_id: 2, slot: 2 }, // bulbasaur - poison
-      { pokemon_id: 25, type_id: 3, slot: 1 }, // pikachu - electric
-      { pokemon_id: 150, type_id: 4, slot: 1 }, // mewtwo - psychic
-    ];
-
-    const insertPokemonType = db.prepare(
-      'INSERT INTO pokemon_types VALUES (?, ?, ?)'
-    );
-    pokemonTypes.forEach((pt) =>
-      insertPokemonType.run(pt.pokemon_id, pt.type_id, pt.slot)
-    );
-
-    // Insert abilities first
-    const abilityData = [
-      { id: 1, name: 'overgrow' },
-      { id: 2, name: 'static' },
-      { id: 3, name: 'pressure' },
-    ];
-
-    const insertAbilityData = db.prepare('INSERT INTO abilities VALUES (?, ?)');
-    abilityData.forEach((a) => insertAbilityData.run(a.id, a.name));
-
-    // Insert pokemon-ability relationships
-    const pokemonAbilities = [
-      { pokemon_id: 1, ability_id: 1, is_hidden: 0, slot: 1 },
-      { pokemon_id: 25, ability_id: 2, is_hidden: 0, slot: 1 },
-      { pokemon_id: 150, ability_id: 3, is_hidden: 0, slot: 1 },
-    ];
-
-    const insertPokemonAbility = db.prepare(
-      'INSERT INTO pokemon_abilities VALUES (?, ?, ?, ?)'
-    );
-    pokemonAbilities.forEach((pa) =>
-      insertPokemonAbility.run(
-        pa.pokemon_id,
-        pa.ability_id,
-        pa.is_hidden,
-        pa.slot
-      )
-    );
+    // Create test database with production schema
+    testDb = new TestDatabase('server-test');
+    testDb.insertTestData();
+    db = testDb.getDatabase();
   });
 
   afterAll(async () => {
-    db.close();
-    try {
-      await fs.unlink(testDbPath);
-    } catch {
-      // Ignore if file doesn't exist
-    }
+    await testDb.cleanup();
   });
 
   describe('Database Queries', () => {
