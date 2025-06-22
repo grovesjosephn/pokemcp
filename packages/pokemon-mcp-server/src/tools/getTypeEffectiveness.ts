@@ -21,7 +21,9 @@ export class GetTypeEffectivenessTool {
       };
     }
 
-    let result = `# ${type.charAt(0).toUpperCase() + type.slice(1)} Type Analysis\n\n`;
+    const typeDisplayName =
+      type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+    let result = `# ${typeDisplayName} Type Analysis\n\n`;
 
     if (includePokemon) {
       const pokemon = this.db
@@ -38,9 +40,12 @@ export class GetTypeEffectivenessTool {
         )
         .all(type) as Array<{ name: string; id: number; generation: number }>;
 
-      result += `## Pokemon with ${type} type (showing first 20):\n\n`;
+      result += `## Pokemon with ${typeDisplayName.toLowerCase()} type (showing first 20):\n\n`;
       result += pokemon
-        .map((p) => `- **${p.name}** (#${p.id}) - Gen ${p.generation}`)
+        .map(
+          (p) =>
+            `- **${p.name.charAt(0).toUpperCase() + p.name.slice(1)}** (#${p.id}) - Gen ${p.generation}`
+        )
         .join('\n');
     }
 

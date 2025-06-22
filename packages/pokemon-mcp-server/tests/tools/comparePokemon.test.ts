@@ -101,7 +101,7 @@ describe('ComparePokemonTool', () => {
     const totalStats1 = 45 + 49 + 49 + 65 + 65 + 45;
     const totalStats2 = 39 + 52 + 43 + 60 + 50 + 65;
     expect(result.content[0].text).toContain(
-      `Total Stats: ${totalStats1} vs ${totalStats2}`
+      `**Total Stats:** ${totalStats1} vs ${totalStats2}`
     );
   });
 });

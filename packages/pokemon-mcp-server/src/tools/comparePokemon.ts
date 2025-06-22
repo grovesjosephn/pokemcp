@@ -55,12 +55,17 @@ export class ComparePokemonTool {
     const stats1 = this.getPokemonStatsData(pokemon1.id);
     const stats2 = this.getPokemonStatsData(pokemon2.id);
 
+    const pokemon1Name =
+      pokemon1.name.charAt(0).toUpperCase() + pokemon1.name.slice(1);
+    const pokemon2Name =
+      pokemon2.name.charAt(0).toUpperCase() + pokemon2.name.slice(1);
+
     const comparison = `# Pokemon Comparison
 
-## ${pokemon1.name} vs ${pokemon2.name}
+## ${pokemon1Name} vs ${pokemon2Name}
 
-| Attribute | ${pokemon1.name} | ${pokemon2.name} |
-|-----------|${'-'.repeat(pokemon1.name.length)}|${'-'.repeat(pokemon2.name.length)}|
+| Attribute | ${pokemon1Name} | ${pokemon2Name} |
+|-----------|${'-'.repeat(pokemon1Name.length)}|${'-'.repeat(pokemon2Name.length)}|
 | ID | #${pokemon1.id} | #${pokemon2.id} |
 | Generation | ${pokemon1.generation} | ${pokemon2.generation} |
 | Height | ${pokemon1.height / 10}m | ${pokemon2.height / 10}m |
@@ -68,8 +73,8 @@ export class ComparePokemonTool {
 
 ## Stat Comparison
 
-| Stat | ${pokemon1.name} | ${pokemon2.name} | Difference |
-|------|${'-'.repeat(pokemon1.name.length)}|${'-'.repeat(pokemon2.name.length)}|------------|
+| Stat | ${pokemon1Name} | ${pokemon2Name} | Difference |
+|------|${'-'.repeat(pokemon1Name.length)}|${'-'.repeat(pokemon2Name.length)}|------------|
 ${stats1
   .map((stat) => {
     const stat2 = stats2.find((s) => s.stat_name === stat.stat_name);

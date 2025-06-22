@@ -1,3 +1,5 @@
+import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+
 export interface Pokemon {
   id: number;
   name: string;
@@ -45,9 +47,4 @@ export interface StrongestArgs {
   limit?: number;
 }
 
-export interface ToolResponse {
-  content: Array<{
-    type: string;
-    text: string;
-  }>;
-}
+export type ToolResponse = CallToolResult;

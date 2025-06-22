@@ -47,7 +47,7 @@ describe('Pokemon MCP Server', () => {
 
     db = new Database(testDbPath);
 
-    // Create test schema
+    // Create test schema matching the actual database structure
     db.exec(`
       CREATE TABLE pokemon (
         id INTEGER PRIMARY KEY,
@@ -60,7 +60,7 @@ describe('Pokemon MCP Server', () => {
         sprite_url TEXT
       );
 
-      CREATE TABLE pokemon_stats (
+      CREATE TABLE stats (
         pokemon_id INTEGER,
         stat_name TEXT,
         base_stat INTEGER,
@@ -68,17 +68,31 @@ describe('Pokemon MCP Server', () => {
         FOREIGN KEY (pokemon_id) REFERENCES pokemon (id)
       );
 
+      CREATE TABLE types (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL
+      );
+
       CREATE TABLE pokemon_types (
         pokemon_id INTEGER,
-        type_name TEXT,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id)
+        type_id INTEGER,
+        slot INTEGER,
+        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id),
+        FOREIGN KEY (type_id) REFERENCES types (id)
+      );
+
+      CREATE TABLE abilities (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL
       );
 
       CREATE TABLE pokemon_abilities (
         pokemon_id INTEGER,
-        ability_name TEXT,
-        is_hidden BOOLEAN,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id)
+        ability_id INTEGER,
+        is_hidden INTEGER,
+        slot INTEGER,
+        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id),
+        FOREIGN KEY (ability_id) REFERENCES abilities (id)
       );
     `);
 
@@ -132,46 +146,104 @@ describe('Pokemon MCP Server', () => {
       )
     );
 
-    // Insert test stats
+    // Insert test stats - using complete stat sets for realistic testing
     const stats = [
+      // Bulbasaur stats
       { pokemon_id: 1, stat_name: 'hp', base_stat: 45, effort: 0 },
       { pokemon_id: 1, stat_name: 'attack', base_stat: 49, effort: 0 },
+      { pokemon_id: 1, stat_name: 'defense', base_stat: 49, effort: 0 },
+      { pokemon_id: 1, stat_name: 'special-attack', base_stat: 65, effort: 1 },
+      { pokemon_id: 1, stat_name: 'special-defense', base_stat: 65, effort: 0 },
+      { pokemon_id: 1, stat_name: 'speed', base_stat: 45, effort: 0 },
+      // Pikachu stats
       { pokemon_id: 25, stat_name: 'hp', base_stat: 35, effort: 0 },
       { pokemon_id: 25, stat_name: 'attack', base_stat: 55, effort: 0 },
+      { pokemon_id: 25, stat_name: 'defense', base_stat: 40, effort: 0 },
+      { pokemon_id: 25, stat_name: 'special-attack', base_stat: 50, effort: 0 },
+      {
+        pokemon_id: 25,
+        stat_name: 'special-defense',
+        base_stat: 50,
+        effort: 0,
+      },
+      { pokemon_id: 25, stat_name: 'speed', base_stat: 90, effort: 2 },
+      // Mewtwo stats
       { pokemon_id: 150, stat_name: 'hp', base_stat: 106, effort: 0 },
       { pokemon_id: 150, stat_name: 'attack', base_stat: 110, effort: 0 },
+      { pokemon_id: 150, stat_name: 'defense', base_stat: 90, effort: 0 },
+      {
+        pokemon_id: 150,
+        stat_name: 'special-attack',
+        base_stat: 154,
+        effort: 3,
+      },
+      {
+        pokemon_id: 150,
+        stat_name: 'special-defense',
+        base_stat: 90,
+        effort: 0,
+      },
+      { pokemon_id: 150, stat_name: 'speed', base_stat: 130, effort: 0 },
     ];
 
-    const insertStat = db.prepare(
-      'INSERT INTO pokemon_stats VALUES (?, ?, ?, ?)'
-    );
+    const insertStat = db.prepare('INSERT INTO stats VALUES (?, ?, ?, ?)');
     stats.forEach((s) =>
       insertStat.run(s.pokemon_id, s.stat_name, s.base_stat, s.effort)
     );
 
-    // Insert test types
-    const types = [
-      { pokemon_id: 1, type_name: 'grass' },
-      { pokemon_id: 1, type_name: 'poison' },
-      { pokemon_id: 25, type_name: 'electric' },
-      { pokemon_id: 150, type_name: 'psychic' },
+    // Insert types first
+    const typeData = [
+      { id: 1, name: 'grass' },
+      { id: 2, name: 'poison' },
+      { id: 3, name: 'electric' },
+      { id: 4, name: 'psychic' },
     ];
 
-    const insertType = db.prepare('INSERT INTO pokemon_types VALUES (?, ?)');
-    types.forEach((t) => insertType.run(t.pokemon_id, t.type_name));
+    const insertTypeData = db.prepare('INSERT INTO types VALUES (?, ?)');
+    typeData.forEach((t) => insertTypeData.run(t.id, t.name));
 
-    // Insert test abilities
-    const abilities = [
-      { pokemon_id: 1, ability_name: 'overgrow', is_hidden: false },
-      { pokemon_id: 25, ability_name: 'static', is_hidden: false },
-      { pokemon_id: 150, ability_name: 'pressure', is_hidden: false },
+    // Insert pokemon-type relationships
+    const pokemonTypes = [
+      { pokemon_id: 1, type_id: 1, slot: 1 }, // bulbasaur - grass
+      { pokemon_id: 1, type_id: 2, slot: 2 }, // bulbasaur - poison
+      { pokemon_id: 25, type_id: 3, slot: 1 }, // pikachu - electric
+      { pokemon_id: 150, type_id: 4, slot: 1 }, // mewtwo - psychic
     ];
 
-    const insertAbility = db.prepare(
-      'INSERT INTO pokemon_abilities VALUES (?, ?, ?)'
+    const insertPokemonType = db.prepare(
+      'INSERT INTO pokemon_types VALUES (?, ?, ?)'
     );
-    abilities.forEach((a) =>
-      insertAbility.run(a.pokemon_id, a.ability_name, a.is_hidden)
+    pokemonTypes.forEach((pt) =>
+      insertPokemonType.run(pt.pokemon_id, pt.type_id, pt.slot)
+    );
+
+    // Insert abilities first
+    const abilityData = [
+      { id: 1, name: 'overgrow' },
+      { id: 2, name: 'static' },
+      { id: 3, name: 'pressure' },
+    ];
+
+    const insertAbilityData = db.prepare('INSERT INTO abilities VALUES (?, ?)');
+    abilityData.forEach((a) => insertAbilityData.run(a.id, a.name));
+
+    // Insert pokemon-ability relationships
+    const pokemonAbilities = [
+      { pokemon_id: 1, ability_id: 1, is_hidden: 0, slot: 1 },
+      { pokemon_id: 25, ability_id: 2, is_hidden: 0, slot: 1 },
+      { pokemon_id: 150, ability_id: 3, is_hidden: 0, slot: 1 },
+    ];
+
+    const insertPokemonAbility = db.prepare(
+      'INSERT INTO pokemon_abilities VALUES (?, ?, ?, ?)'
+    );
+    pokemonAbilities.forEach((pa) =>
+      insertPokemonAbility.run(
+        pa.pokemon_id,
+        pa.ability_id,
+        pa.is_hidden,
+        pa.slot
+      )
     );
   });
 
@@ -188,15 +260,14 @@ describe('Pokemon MCP Server', () => {
     it('should get pokemon by id', () => {
       const query = `
         SELECT p.*, 
-               json_group_array(json_object('stat_name', s.stat_name, 'base_stat', s.base_stat, 'effort', s.effort)) as stats,
-               json_group_array(DISTINCT t.type_name) as types,
-               json_group_array(json_object('name', a.ability_name, 'is_hidden', a.is_hidden)) as abilities
+               (SELECT json_group_array(json_object('stat_name', stat_name, 'base_stat', base_stat, 'effort', effort)) 
+                FROM stats WHERE pokemon_id = p.id) as stats,
+               (SELECT json_group_array(DISTINCT t.name) 
+                FROM pokemon_types pt JOIN types t ON pt.type_id = t.id WHERE pt.pokemon_id = p.id) as types,
+               (SELECT json_group_array(json_object('name', a.name, 'is_hidden', pa.is_hidden)) 
+                FROM pokemon_abilities pa JOIN abilities a ON pa.ability_id = a.id WHERE pa.pokemon_id = p.id) as abilities
         FROM pokemon p
-        LEFT JOIN pokemon_stats s ON p.id = s.pokemon_id
-        LEFT JOIN pokemon_types t ON p.id = t.pokemon_id  
-        LEFT JOIN pokemon_abilities a ON p.id = a.pokemon_id
         WHERE p.id = ?
-        GROUP BY p.id
       `;
 
       const result = db.prepare(query).get(1) as any;
@@ -206,7 +277,7 @@ describe('Pokemon MCP Server', () => {
       expect(result.id).toBe(1);
 
       const stats = JSON.parse(result.stats);
-      expect(stats).toHaveLength(2);
+      expect(stats).toHaveLength(6);
       expect(
         stats.some((s: any) => s.stat_name === 'hp' && s.base_stat === 45)
       ).toBe(true);
@@ -221,7 +292,8 @@ describe('Pokemon MCP Server', () => {
         SELECT DISTINCT p.* 
         FROM pokemon p
         JOIN pokemon_types pt ON p.id = pt.pokemon_id
-        WHERE pt.type_name = ?
+        JOIN types t ON pt.type_id = t.id
+        WHERE t.name = ?
         LIMIT 10
       `;
 
@@ -235,7 +307,7 @@ describe('Pokemon MCP Server', () => {
       const query = `
         SELECT p.*, s.base_stat
         FROM pokemon p
-        JOIN pokemon_stats s ON p.id = s.pokemon_id
+        JOIN stats s ON p.id = s.pokemon_id
         WHERE s.stat_name = ?
         ORDER BY s.base_stat DESC
         LIMIT ?
@@ -266,14 +338,14 @@ describe('Pokemon MCP Server', () => {
       const query = `
         SELECT DISTINCT p.* 
         FROM pokemon p
-        JOIN pokemon_stats s ON p.id = s.pokemon_id
+        JOIN stats s ON p.id = s.pokemon_id
         WHERE s.base_stat >= ?
         LIMIT 10
       `;
 
       const results = db.prepare(query).all(100) as Pokemon[];
 
-      expect(results).toHaveLength(2); // mewtwo appears twice (hp and attack > 100)
+      expect(results).toHaveLength(1); // mewtwo (DISTINCT pokemon with stats > 100)
       expect(results.every((p) => p.name === 'mewtwo')).toBe(true);
     });
   });
@@ -282,15 +354,14 @@ describe('Pokemon MCP Server', () => {
     it('should handle non-existent pokemon', () => {
       const query = `
         SELECT p.*, 
-               json_group_array(json_object('stat_name', s.stat_name, 'base_stat', s.base_stat, 'effort', s.effort)) as stats,
-               json_group_array(DISTINCT t.type_name) as types,
-               json_group_array(json_object('name', a.ability_name, 'is_hidden', a.is_hidden)) as abilities
+               (SELECT json_group_array(json_object('stat_name', stat_name, 'base_stat', base_stat, 'effort', effort)) 
+                FROM stats WHERE pokemon_id = p.id) as stats,
+               (SELECT json_group_array(DISTINCT t.name) 
+                FROM pokemon_types pt JOIN types t ON pt.type_id = t.id WHERE pt.pokemon_id = p.id) as types,
+               (SELECT json_group_array(json_object('name', a.name, 'is_hidden', pa.is_hidden)) 
+                FROM pokemon_abilities pa JOIN abilities a ON pa.ability_id = a.id WHERE pa.pokemon_id = p.id) as abilities
         FROM pokemon p
-        LEFT JOIN pokemon_stats s ON p.id = s.pokemon_id
-        LEFT JOIN pokemon_types t ON p.id = t.pokemon_id  
-        LEFT JOIN pokemon_abilities a ON p.id = a.pokemon_id
         WHERE p.id = ?
-        GROUP BY p.id
       `;
 
       const result = db.prepare(query).get(999);
@@ -303,7 +374,8 @@ describe('Pokemon MCP Server', () => {
         SELECT DISTINCT p.* 
         FROM pokemon p
         JOIN pokemon_types pt ON p.id = pt.pokemon_id
-        WHERE pt.type_name = ?
+        JOIN types t ON pt.type_id = t.id
+        WHERE t.name = ?
         LIMIT 10
       `;
 

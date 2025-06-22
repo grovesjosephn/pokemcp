@@ -77,7 +77,9 @@ describe('GetPokemonStatsTool', () => {
   it('should calculate total stats correctly', async () => {
     const result = await tool.execute('1');
     const totalStats = 45 + 49 + 49 + 65 + 65 + 45;
-    expect(result.content[0].text).toContain(`Total Base Stats: ${totalStats}`);
+    expect(result.content[0].text).toContain(
+      `**Total Base Stats:** ${totalStats}`
+    );
   });
 
   it('should calculate stat distribution percentages correctly', async () => {
