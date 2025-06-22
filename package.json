@@ -6,7 +6,9 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r dev",
-    "test": "pnpm -r test",
+    "test": "pnpm -r test:run",
+    "test:watch": "pnpm -r test",
+    "test:run": "pnpm -r test:run",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

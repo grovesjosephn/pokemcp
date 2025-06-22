@@ -18,7 +18,9 @@ The system uses a shared SQLite database (`data/pokemon.sqlite`) for Pokemon dat
 ```bash
 pnpm build         # Build all packages
 pnpm dev           # Run all packages in development mode
-pnpm test          # Run tests for all packages with vitest
+pnpm test          # Run tests for all packages (single run)
+pnpm test:watch    # Run tests in watch mode
+pnpm test:run      # Run tests for all packages (single run)
 pnpm lint          # Lint all packages
 pnpm format        # Format all files with prettier
 pnpm format:check  # Check formatting without modifying files
@@ -32,7 +34,9 @@ pnpm dev           # Watch mode with tsx
 pnpm start         # Run server directly
 pnpm inspect       # Run MCP Inspector GUI for testing
 pnpm inspect:cli   # Run MCP Inspector CLI for testing
-pnpm test          # Run server tests with vitest
+pnpm test          # Run server tests (single run)
+pnpm test:watch    # Run server tests in watch mode
+pnpm test:run      # Run server tests (single run)
 pnpm format        # Format package files
 pnpm format:check  # Check package formatting
 ```
@@ -44,7 +48,9 @@ pnpm build         # Compile TypeScript
 pnpm dev           # Watch mode with tsx
 pnpm start         # Run ingestion
 pnpm ingest        # Run ingestion (alias)
-pnpm test          # Run ingestion tests with vitest
+pnpm test          # Run ingestion tests (single run)
+pnpm test:watch    # Run ingestion tests in watch mode
+pnpm test:run      # Run ingestion tests (single run)
 pnpm format        # Format package files
 pnpm format:check  # Check package formatting
 ```

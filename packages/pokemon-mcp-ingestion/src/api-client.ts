@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { IngestionConfig } from './config.js';
 import { RateLimiter } from './rate-limiter.js';
 

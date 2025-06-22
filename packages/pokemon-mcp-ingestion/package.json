@@ -12,14 +12,15 @@
     "dev": "tsx watch index.ts",
     "start": "tsx index.ts",
     "ingest": "tsx index.ts",
-    "test": "vitest",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:run": "vitest --run",
     "clean": "rm -rf dist",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "better-sqlite3": "catalog:",
-    "node-fetch": "catalog:"
+    "better-sqlite3": "catalog:"
   },
   "devDependencies": {
     "@types/better-sqlite3": "catalog:",
