@@ -127,7 +127,7 @@ describe('SearchPokemonTool', () => {
   it('should return no results message when no matches found', async () => {
     const result = await tool.execute({ type: 'dragon' });
     expect(result.content[0].text).toBe(
-      'No Pokemon found matching the specified criteria.'
+      '❌ **Error:** No Pokemon found matching the criteria.'
     );
   });
 });

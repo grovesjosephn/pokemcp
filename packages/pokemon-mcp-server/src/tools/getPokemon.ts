@@ -1,5 +1,10 @@
 import Database from 'better-sqlite3';
 import { Pokemon, Stat, Type, Ability, ToolResponse } from '../types/index.js';
+import {
+  ResponseFormatter,
+  PokemonData,
+  MarkdownFormatter,
+} from '../formatters/index.js';
 
 interface PokemonCompleteRow {
   // Pokemon data
@@ -26,8 +31,14 @@ interface PokemonCompleteRow {
 
 export class GetPokemonTool {
   private preparedQuery: Database.Statement | null = null;
+  private formatter: ResponseFormatter;
 
-  constructor(private db: Database.Database) {
+  constructor(
+    private db: Database.Database,
+    formatter?: ResponseFormatter
+  ) {
+    // Default to markdown formatter for backward compatibility
+    this.formatter = formatter || new MarkdownFormatter();
     // Pre-prepare the optimized query for better performance
     this.preparedQuery = this.db.prepare(`
       SELECT 
@@ -58,46 +69,42 @@ export class GetPokemonTool {
     ) as PokemonCompleteRow[];
 
     if (rows.length === 0) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Pokemon "${identifier}" not found.`,
-          },
-        ],
-      };
+      return this.formatter.formatNotFound(identifier);
     }
 
-    // Process the denormalized data
+    // Process the denormalized data and convert to PokemonData format
     const pokemon = this.extractPokemonData(rows[0]);
     const stats = this.extractStats(rows);
     const types = this.extractTypes(rows);
     const abilities = this.extractAbilities(rows);
 
-    const totalStats = stats.reduce((sum, stat) => sum + stat.base_stat, 0);
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `# ${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} (#${pokemon.id})
-
-**Basic Info:**
-- Generation: ${pokemon.generation}
-- Height: ${pokemon.height / 10}m
-- Weight: ${pokemon.weight / 10}kg
-- Base Experience: ${pokemon.base_experience}
-
-**Types:** ${types.map((t) => t.name).join(', ')}
-
-**Abilities:** ${abilities.map((a) => a.name + (a.is_hidden ? ' (Hidden)' : '')).join(', ')}
-
-**Base Stats:**
-${stats.map((s) => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
-- **Total: ${totalStats}**`,
-        },
-      ],
+    // Convert to PokemonData format for formatter
+    const pokemonData: PokemonData = {
+      id: pokemon.id,
+      name: pokemon.name,
+      height: pokemon.height,
+      weight: pokemon.weight,
+      base_experience: pokemon.base_experience,
+      generation: pokemon.generation,
+      species_url: pokemon.species_url,
+      sprite_url: pokemon.sprite_url,
+      stats: stats.map((stat) => ({
+        stat_name: stat.stat_name,
+        base_stat: stat.base_stat,
+        effort: stat.effort,
+      })),
+      types: types.map((type, index) => ({
+        name: type.name,
+        slot: index + 1,
+      })),
+      abilities: abilities.map((ability, index) => ({
+        name: ability.name,
+        is_hidden: ability.is_hidden,
+        slot: index + 1,
+      })),
     };
+
+    return this.formatter.formatPokemon(pokemonData);
   }
 
   private extractPokemonData(row: PokemonCompleteRow): Pokemon {

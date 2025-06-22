@@ -27,6 +27,7 @@ import { ComparePokemonTool } from './src/tools/comparePokemon.js';
 import { GetTypeEffectivenessTool } from './src/tools/getTypeEffectiveness.js';
 import { GetPokemonStatsTool } from './src/tools/getPokemonStats.js';
 import { StrongestPokemonTool } from './src/tools/strongestPokemon.js';
+import { MarkdownFormatter } from './src/formatters/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,13 +86,17 @@ class PokemonMCPServer {
       }
     );
 
-    // Initialize tool instances
-    this.getPokemonTool = new GetPokemonTool(this.db);
-    this.searchPokemonTool = new SearchPokemonTool(this.db);
-    this.comparePokemonTool = new ComparePokemonTool(this.db);
-    this.getTypeEffectivenessTool = new GetTypeEffectivenessTool(this.db);
-    this.getPokemonStatsTool = new GetPokemonStatsTool(this.db);
-    this.strongestPokemonTool = new StrongestPokemonTool(this.db);
+    // Initialize tool instances with shared formatter
+    const formatter = new MarkdownFormatter();
+    this.getPokemonTool = new GetPokemonTool(this.db, formatter);
+    this.searchPokemonTool = new SearchPokemonTool(this.db, formatter);
+    this.comparePokemonTool = new ComparePokemonTool(this.db, formatter);
+    this.getTypeEffectivenessTool = new GetTypeEffectivenessTool(
+      this.db,
+      formatter
+    );
+    this.getPokemonStatsTool = new GetPokemonStatsTool(this.db, formatter);
+    this.strongestPokemonTool = new StrongestPokemonTool(this.db, formatter);
 
     this.setupToolHandlers();
     this.setupErrorHandling();

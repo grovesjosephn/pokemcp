@@ -1,8 +1,20 @@
 import Database from 'better-sqlite3';
 import { SearchArgs, ToolResponse } from '../types/index.js';
+import {
+  ResponseFormatter,
+  PokemonSearchResults,
+  MarkdownFormatter,
+} from '../formatters/index.js';
 
 export class SearchPokemonTool {
-  constructor(private db: Database.Database) {}
+  private formatter: ResponseFormatter;
+
+  constructor(
+    private db: Database.Database,
+    formatter?: ResponseFormatter
+  ) {
+    this.formatter = formatter || new MarkdownFormatter();
+  }
 
   async execute(args: SearchArgs): Promise<ToolResponse> {
     let query = `
@@ -57,34 +69,17 @@ export class SearchPokemonTool {
       types: string;
     }>;
 
-    if (results.length === 0) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: 'No Pokemon found matching the specified criteria.',
-          },
-        ],
-      };
-    }
-
-    const resultText = `# Search Results (${results.length} found)
-
-${results
-  .map(
-    (p) =>
-      `**${p.name.charAt(0).toUpperCase() + p.name.slice(1)}** (#${p.id}) - Gen ${p.generation}
-  Types: ${p.types}`
-  )
-  .join('\n\n')}`;
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: resultText,
-        },
-      ],
+    const searchResults: PokemonSearchResults = {
+      criteria: args,
+      totalCount: results.length,
+      results: results.map((r) => ({
+        id: r.id,
+        name: r.name,
+        generation: r.generation,
+        types: r.types.split(',').map((type) => type.trim()),
+      })),
     };
+
+    return this.formatter.formatSearchResults(searchResults);
   }
 }

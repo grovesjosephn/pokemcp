@@ -1,8 +1,20 @@
 import Database from 'better-sqlite3';
 import { StrongestArgs, ToolResponse } from '../types/index.js';
+import {
+  ResponseFormatter,
+  StrongestPokemonData,
+  MarkdownFormatter,
+} from '../formatters/index.js';
 
 export class StrongestPokemonTool {
-  constructor(private db: Database.Database) {}
+  private formatter: ResponseFormatter;
+
+  constructor(
+    private db: Database.Database,
+    formatter?: ResponseFormatter
+  ) {
+    this.formatter = formatter || new MarkdownFormatter();
+  }
 
   async execute(args: StrongestArgs): Promise<ToolResponse> {
     const { criteria, type, generation, limit = 10 } = args;
@@ -68,23 +80,16 @@ export class StrongestPokemonTool {
       stat_value: number;
     }>;
 
-    const resultText = `# Strongest Pokemon by ${criteria.replace('_', ' ')}
-
-${results
-  .map(
-    (p, index) =>
-      `${index + 1}. **${p.name}** (#${p.id}) - Gen ${p.generation}
-   ${criteria.replace('_', ' ')}: ${p.stat_value}`
-  )
-  .join('\n\n')}`;
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: resultText,
-        },
-      ],
+    const strongestData: StrongestPokemonData = {
+      criteria: args,
+      results: results.map((r) => ({
+        id: r.id,
+        name: r.name,
+        generation: r.generation,
+        statValue: r.stat_value,
+      })),
     };
+
+    return this.formatter.formatStrongestPokemon(strongestData);
   }
 }

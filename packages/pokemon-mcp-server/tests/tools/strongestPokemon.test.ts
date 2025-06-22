@@ -49,9 +49,9 @@ describe('StrongestPokemonTool', () => {
     db.exec(`
       INSERT INTO pokemon (id, name, height, weight, base_experience, generation, species_url, sprite_url)
       VALUES 
-        (1, 'bulbasaur', 7, 69, 64, 1, 'https://pokeapi.co/api/v2/pokemon-species/1/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png'),
-        (4, 'charmander', 6, 85, 62, 1, 'https://pokeapi.co/api/v2/pokemon-species/4/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png'),
-        (7, 'squirtle', 5, 90, 63, 1, 'https://pokeapi.co/api/v2/pokemon-species/7/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png');
+        (1, 'Bulbasaur', 7, 69, 64, 1, 'https://pokeapi.co/api/v2/pokemon-species/1/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png'),
+        (4, 'Charmander', 6, 85, 62, 1, 'https://pokeapi.co/api/v2/pokemon-species/4/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png'),
+        (7, 'Squirtle', 5, 90, 63, 1, 'https://pokeapi.co/api/v2/pokemon-species/7/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png');
 
       INSERT INTO types (id, name) VALUES 
         (1, 'grass'),
@@ -94,26 +94,26 @@ describe('StrongestPokemonTool', () => {
     expect(result.content[0].text).toContain(
       'Strongest Pokemon by total stats'
     );
-    expect(result.content[0].text).toContain('bulbasaur');
+    expect(result.content[0].text).toContain('Bulbasaur');
   });
 
   it('should find Pokemon with highest attack', async () => {
     const result = await tool.execute({ criteria: 'attack' });
     expect(result.content[0].text).toContain('Strongest Pokemon by attack');
-    expect(result.content[0].text).toContain('charmander');
+    expect(result.content[0].text).toContain('Charmander');
   });
 
   it('should find Pokemon with highest defense', async () => {
     const result = await tool.execute({ criteria: 'defense' });
     expect(result.content[0].text).toContain('Strongest Pokemon by defense');
-    expect(result.content[0].text).toContain('squirtle');
+    expect(result.content[0].text).toContain('Squirtle');
   });
 
   it('should filter by type', async () => {
     const result = await tool.execute({ criteria: 'attack', type: 'fire' });
-    expect(result.content[0].text).toContain('charmander');
-    expect(result.content[0].text).not.toContain('bulbasaur');
-    expect(result.content[0].text).not.toContain('squirtle');
+    expect(result.content[0].text).toContain('Charmander');
+    expect(result.content[0].text).not.toContain('Bulbasaur');
+    expect(result.content[0].text).not.toContain('Squirtle');
   });
 
   it('should filter by generation', async () => {
@@ -121,9 +121,9 @@ describe('StrongestPokemonTool', () => {
       criteria: 'total_stats',
       generation: 1,
     });
-    expect(result.content[0].text).toContain('bulbasaur');
-    expect(result.content[0].text).toContain('charmander');
-    expect(result.content[0].text).toContain('squirtle');
+    expect(result.content[0].text).toContain('Bulbasaur');
+    expect(result.content[0].text).toContain('Charmander');
+    expect(result.content[0].text).toContain('Squirtle');
   });
 
   it('should respect the limit parameter', async () => {
