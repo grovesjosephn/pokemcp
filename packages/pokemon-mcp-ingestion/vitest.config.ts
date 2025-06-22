@@ -4,8 +4,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['**/*.test.ts', '**/*.spec.ts'],
-    exclude: ['node_modules', 'dist'],
     // Resolve CJS build deprecation warning
     pool: 'forks',
   },

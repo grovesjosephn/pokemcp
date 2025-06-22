@@ -10,6 +10,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  CallToolResult,
   ErrorCode,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
@@ -19,59 +20,31 @@ import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 
+// Import extracted tool classes
+import { GetPokemonTool } from './src/tools/getPokemon.js';
+import { SearchPokemonTool } from './src/tools/searchPokemon.js';
+import { ComparePokemonTool } from './src/tools/comparePokemon.js';
+import { GetTypeEffectivenessTool } from './src/tools/getTypeEffectiveness.js';
+import { GetPokemonStatsTool } from './src/tools/getPokemonStats.js';
+import { StrongestPokemonTool } from './src/tools/strongestPokemon.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface Pokemon {
-  id: number;
-  name: string;
-  height: number;
-  weight: number;
-  base_experience: number;
-  generation: number;
-  species_url: string;
-  sprite_url: string;
-}
-
-interface Stat {
-  stat_name: string;
-  base_stat: number;
-  effort: number;
-}
-
-interface Type {
-  name: string;
-}
-
-interface Ability {
-  name: string;
-  is_hidden: boolean;
-}
-
-interface SearchArgs {
-  type?: string;
-  generation?: number;
-  min_stat?: number;
-  limit?: number;
-}
-
-interface StrongestArgs {
-  criteria:
-    | 'total_stats'
-    | 'attack'
-    | 'defense'
-    | 'hp'
-    | 'speed'
-    | 'sp_attack'
-    | 'sp_defense';
-  type?: string;
-  generation?: number;
-  limit?: number;
-}
+// Import types
+import { SearchArgs, StrongestArgs } from './src/types/index.js';
 
 class PokemonMCPServer {
   private server: Server;
   private db: Database.Database;
+
+  // Tool instances
+  private getPokemonTool: GetPokemonTool;
+  private searchPokemonTool: SearchPokemonTool;
+  private comparePokemonTool: ComparePokemonTool;
+  private getTypeEffectivenessTool: GetTypeEffectivenessTool;
+  private getPokemonStatsTool: GetPokemonStatsTool;
+  private strongestPokemonTool: StrongestPokemonTool;
 
   constructor() {
     // Ensure data directory exists - handle both local dev and Claude Desktop paths
@@ -111,6 +84,14 @@ class PokemonMCPServer {
         },
       }
     );
+
+    // Initialize tool instances
+    this.getPokemonTool = new GetPokemonTool(this.db);
+    this.searchPokemonTool = new SearchPokemonTool(this.db);
+    this.comparePokemonTool = new ComparePokemonTool(this.db);
+    this.getTypeEffectivenessTool = new GetTypeEffectivenessTool(this.db);
+    this.getPokemonStatsTool = new GetPokemonStatsTool(this.db);
+    this.strongestPokemonTool = new StrongestPokemonTool(this.db);
 
     this.setupToolHandlers();
     this.setupErrorHandling();
@@ -270,7 +251,7 @@ class PokemonMCPServer {
             if (typeof args.identifier !== 'string') {
               throw new McpError(ErrorCode.InvalidParams, 'Invalid identifier');
             }
-            return await this.getPokemon(args.identifier);
+            return await this.getPokemonTool.execute(args.identifier);
           }
 
           case 'search_pokemon': {
@@ -280,7 +261,7 @@ class PokemonMCPServer {
                 'Invalid search arguments'
               );
             }
-            return await this.searchPokemon(args);
+            return await this.searchPokemonTool.execute(args);
           }
 
           case 'compare_pokemon': {
@@ -293,7 +274,10 @@ class PokemonMCPServer {
                 'Invalid Pokemon identifiers'
               );
             }
-            return await this.comparePokemon(args.pokemon1, args.pokemon2);
+            return await this.comparePokemonTool.execute(
+              args.pokemon1,
+              args.pokemon2
+            );
           }
 
           case 'get_type_effectiveness': {
@@ -304,14 +288,17 @@ class PokemonMCPServer {
               args.include_pokemon === undefined
                 ? false
                 : Boolean(args.include_pokemon);
-            return await this.getTypeEffectiveness(args.type, includePokemon);
+            return await this.getTypeEffectivenessTool.execute(
+              args.type,
+              includePokemon
+            );
           }
 
           case 'get_pokemon_stats': {
             if (typeof args.identifier !== 'string') {
               throw new McpError(ErrorCode.InvalidParams, 'Invalid identifier');
             }
-            return await this.getPokemonStats(args.identifier);
+            return await this.getPokemonStatsTool.execute(args.identifier);
           }
 
           case 'strongest_pokemon': {
@@ -321,7 +308,7 @@ class PokemonMCPServer {
                 'Invalid strongest arguments'
               );
             }
-            return await this.getStrongestPokemon(args);
+            return await this.strongestPokemonTool.execute(args);
           }
 
           default:
@@ -376,432 +363,6 @@ class PokemonMCPServer {
       (strongestArgs.limit === undefined ||
         typeof strongestArgs.limit === 'number')
     );
-  }
-
-  private async getPokemon(identifier: string) {
-    const isNumeric = /^\d+$/.test(identifier);
-    const query = isNumeric
-      ? 'SELECT * FROM pokemon WHERE id = ?'
-      : 'SELECT * FROM pokemon WHERE LOWER(name) = LOWER(?)';
-
-    const pokemon = this.db.prepare(query).get(identifier) as
-      | Pokemon
-      | undefined;
-
-    if (!pokemon) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Pokemon "${identifier}" not found.`,
-          },
-        ],
-      };
-    }
-
-    // Get additional details
-    const stats = this.db
-      .prepare(
-        `
-      SELECT stat_name, base_stat, effort
-      FROM stats
-      WHERE pokemon_id = ?
-    `
-      )
-      .all(pokemon.id) as Stat[];
-
-    const types = this.db
-      .prepare(
-        `
-      SELECT t.name
-      FROM types t
-      JOIN pokemon_types pt ON t.id = pt.type_id
-      WHERE pt.pokemon_id = ?
-      ORDER BY pt.slot
-    `
-      )
-      .all(pokemon.id) as Type[];
-
-    const abilities = this.db
-      .prepare(
-        `
-      SELECT a.name, pa.is_hidden
-      FROM abilities a
-      JOIN pokemon_abilities pa ON a.id = pa.ability_id
-      WHERE pa.pokemon_id = ?
-      ORDER BY pa.slot
-    `
-      )
-      .all(pokemon.id) as Ability[];
-
-    const totalStats = stats.reduce((sum, stat) => sum + stat.base_stat, 0);
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `# ${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)} (#${pokemon.id})
-
-**Basic Info:**
-- Generation: ${pokemon.generation}
-- Height: ${pokemon.height / 10}m
-- Weight: ${pokemon.weight / 10}kg
-- Base Experience: ${pokemon.base_experience}
-
-**Types:** ${types.map((t) => t.name).join(', ')}
-
-**Abilities:** ${abilities.map((a) => a.name + (a.is_hidden ? ' (Hidden)' : '')).join(', ')}
-
-**Base Stats:**
-${stats.map((s) => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
-- **Total: ${totalStats}**`,
-        },
-      ],
-    };
-  }
-
-  private async searchPokemon(args: SearchArgs) {
-    let query = `
-      SELECT p.id, p.name, p.generation,
-             GROUP_CONCAT(t.name) as types
-      FROM pokemon p
-      JOIN pokemon_types pt ON p.id = pt.pokemon_id
-      JOIN types t ON pt.type_id = t.id
-    `;
-
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
-
-    if (args.type) {
-      conditions.push(`EXISTS (
-        SELECT 1 FROM pokemon_types pt2
-        JOIN types t2 ON pt2.type_id = t2.id
-        WHERE pt2.pokemon_id = p.id AND LOWER(t2.name) = LOWER(?)
-      )`);
-      params.push(args.type);
-    }
-
-    if (args.generation) {
-      conditions.push('p.generation = ?');
-      params.push(args.generation);
-    }
-
-    if (args.min_stat) {
-      query += ` JOIN (
-        SELECT pokemon_id, SUM(base_stat) as total_stats
-        FROM stats
-        GROUP BY pokemon_id
-        HAVING total_stats >= ?
-      ) stat_totals ON p.id = stat_totals.pokemon_id`;
-      params.push(args.min_stat);
-    }
-
-    if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
-    }
-
-    query += ` GROUP BY p.id, p.name, p.generation
-               ORDER BY p.id
-               LIMIT ?`;
-
-    params.push(args.limit || 20);
-
-    const results = this.db.prepare(query).all(...params) as Array<{
-      id: number;
-      name: string;
-      generation: number;
-      types: string;
-    }>;
-
-    if (results.length === 0) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: 'No Pokemon found matching the specified criteria.',
-          },
-        ],
-      };
-    }
-
-    const resultText = `# Search Results (${results.length} found)
-
-${results
-  .map(
-    (p) =>
-      `**${p.name.charAt(0).toUpperCase() + p.name.slice(1)}** (#${p.id}) - Gen ${p.generation}
-  Types: ${p.types}`
-  )
-  .join('\n\n')}`;
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: resultText,
-        },
-      ],
-    };
-  }
-
-  private async comparePokemon(identifier1: string, identifier2: string) {
-    const pokemon1 = this.getPokemonData(identifier1);
-    const pokemon2 = this.getPokemonData(identifier2);
-
-    if (!pokemon1 || !pokemon2) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `One or both Pokemon not found: "${identifier1}", "${identifier2}"`,
-          },
-        ],
-      };
-    }
-
-    const stats1 = this.getPokemonStatsData(pokemon1.id);
-    const stats2 = this.getPokemonStatsData(pokemon2.id);
-
-    const comparison = `# Pokemon Comparison
-
-## ${pokemon1.name} vs ${pokemon2.name}
-
-| Attribute | ${pokemon1.name} | ${pokemon2.name} |
-|-----------|${'-'.repeat(pokemon1.name.length)}|${'-'.repeat(pokemon2.name.length)}|
-| ID | #${pokemon1.id} | #${pokemon2.id} |
-| Generation | ${pokemon1.generation} | ${pokemon2.generation} |
-| Height | ${pokemon1.height / 10}m | ${pokemon2.height / 10}m |
-| Weight | ${pokemon1.weight / 10}kg | ${pokemon2.weight / 10}kg |
-
-## Stat Comparison
-
-| Stat | ${pokemon1.name} | ${pokemon2.name} | Difference |
-|------|${'-'.repeat(pokemon1.name.length)}|${'-'.repeat(pokemon2.name.length)}|------------|
-${stats1
-  .map((stat) => {
-    const stat2 = stats2.find((s) => s.stat_name === stat.stat_name);
-    const diff = stat.base_stat - (stat2?.base_stat ?? 0);
-    const diffStr = diff > 0 ? `+${diff}` : diff.toString();
-    return `| ${stat.stat_name} | ${stat.base_stat} | ${stat2?.base_stat ?? 0} | ${diffStr} |`;
-  })
-  .join('\n')}
-
-**Total Stats:** ${stats1.reduce((sum, s) => sum + s.base_stat, 0)} vs ${stats2.reduce((sum, s) => sum + s.base_stat, 0)}`;
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: comparison,
-        },
-      ],
-    };
-  }
-
-  private async getTypeEffectiveness(type: string, includePokemon = false) {
-    // Check if type exists
-    const typeExists = this.db
-      .prepare('SELECT id FROM types WHERE LOWER(name) = LOWER(?)')
-      .get(type);
-
-    if (!typeExists) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Type "${type}" not found.`,
-          },
-        ],
-      };
-    }
-
-    let result = `# ${type.charAt(0).toUpperCase() + type.slice(1)} Type Analysis\n\n`;
-
-    if (includePokemon) {
-      const pokemon = this.db
-        .prepare(
-          `
-        SELECT p.name, p.id, p.generation
-        FROM pokemon p
-        JOIN pokemon_types pt ON p.id = pt.pokemon_id
-        JOIN types t ON pt.type_id = t.id
-        WHERE LOWER(t.name) = LOWER(?)
-        ORDER BY p.id
-        LIMIT 20
-      `
-        )
-        .all(type) as Array<{ name: string; id: number; generation: number }>;
-
-      result += `## Pokemon with ${type} type (showing first 20):\n\n`;
-      result += pokemon
-        .map((p) => `- **${p.name}** (#${p.id}) - Gen ${p.generation}`)
-        .join('\n');
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: result,
-        },
-      ],
-    };
-  }
-
-  private async getPokemonStats(identifier: string) {
-    const pokemon = this.getPokemonData(identifier);
-
-    if (!pokemon) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Pokemon "${identifier}" not found.`,
-          },
-        ],
-      };
-    }
-
-    const stats = this.getPokemonStatsData(pokemon.id);
-    const totalStats = stats.reduce((sum, stat) => sum + stat.base_stat, 0);
-
-    const statsText = `# ${pokemon.name} - Detailed Stats
-
-## Base Stats
-${stats.map((s) => `**${s.stat_name}:** ${s.base_stat} (EV: ${s.effort})`).join('\n')}
-
-**Total Base Stats:** ${totalStats}
-
-## Stat Distribution
-${stats
-  .map((s) => {
-    const percentage = ((s.base_stat / totalStats) * 100).toFixed(1);
-    return `- ${s.stat_name}: ${percentage}% of total stats`;
-  })
-  .join('\n')}`;
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: statsText,
-        },
-      ],
-    };
-  }
-
-  private async getStrongestPokemon(args: StrongestArgs) {
-    const { criteria, type, generation, limit = 10 } = args;
-
-    let statColumn: string;
-    switch (criteria) {
-      case 'total_stats':
-        statColumn = 'SUM(s.base_stat)';
-        break;
-      case 'attack':
-      case 'defense':
-      case 'hp':
-      case 'speed':
-      case 'sp_attack':
-      case 'sp_defense':
-        statColumn = 's.base_stat';
-        break;
-      default:
-        throw new Error('Invalid criteria');
-    }
-
-    let query = `
-      SELECT p.name, p.id, p.generation, ${statColumn} as stat_value
-      FROM pokemon p
-      JOIN stats s ON p.id = s.pokemon_id
-    `;
-
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
-
-    if (criteria !== 'total_stats') {
-      conditions.push('s.stat_name = ?');
-      params.push(criteria.replace('_', '-'));
-    }
-
-    if (type) {
-      query += ` JOIN pokemon_types pt ON p.id = pt.pokemon_id
-                 JOIN types t ON pt.type_id = t.id`;
-      conditions.push('LOWER(t.name) = LOWER(?)');
-      params.push(type);
-    }
-
-    if (generation) {
-      conditions.push('p.generation = ?');
-      params.push(generation);
-    }
-
-    if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
-    }
-
-    if (criteria === 'total_stats') {
-      query += ` GROUP BY p.id, p.name, p.generation`;
-    }
-
-    query += ` ORDER BY stat_value DESC LIMIT ?`;
-    params.push(limit);
-
-    const results = this.db.prepare(query).all(...params) as Array<{
-      name: string;
-      id: number;
-      generation: number;
-      stat_value: number;
-    }>;
-
-    const resultText = `# Strongest Pokemon by ${criteria.replace('_', ' ')}
-
-${results
-  .map(
-    (p, index) =>
-      `${index + 1}. **${p.name}** (#${p.id}) - Gen ${p.generation}
-   ${criteria.replace('_', ' ')}: ${p.stat_value}`
-  )
-  .join('\n\n')}`;
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: resultText,
-        },
-      ],
-    };
-  }
-
-  private getPokemonData(identifier: string): Pokemon | undefined {
-    const isNumeric = /^\d+$/.test(identifier);
-    const query = isNumeric
-      ? 'SELECT * FROM pokemon WHERE id = ?'
-      : 'SELECT * FROM pokemon WHERE LOWER(name) = LOWER(?)';
-
-    return this.db.prepare(query).get(identifier) as Pokemon | undefined;
-  }
-
-  private getPokemonStatsData(pokemonId: number): Stat[] {
-    return this.db
-      .prepare(
-        `
-      SELECT stat_name, base_stat, effort
-      FROM stats
-      WHERE pokemon_id = ?
-      ORDER BY
-        CASE stat_name
-          WHEN 'hp' THEN 1
-          WHEN 'attack' THEN 2
-          WHEN 'defense' THEN 3
-          WHEN 'special-attack' THEN 4
-          WHEN 'special-defense' THEN 5
-          WHEN 'speed' THEN 6
-        END
-    `
-      )
-      .all(pokemonId) as Stat[];
   }
 
   private setupErrorHandling(): void {

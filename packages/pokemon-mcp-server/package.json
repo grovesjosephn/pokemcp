@@ -30,6 +30,7 @@
     "@modelcontextprotocol/inspector": "catalog:",
     "@types/better-sqlite3": "catalog:",
     "@types/node": "catalog:",
+    "@vitest/ui": "3.2.4",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

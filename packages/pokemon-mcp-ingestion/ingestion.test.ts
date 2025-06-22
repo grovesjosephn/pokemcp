@@ -8,8 +8,7 @@ import {
   vi,
 } from 'vitest';
 import Database from 'better-sqlite3';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { TestDatabase } from './tests/helpers/testDatabase.js';
 
 // Mock node-fetch
 vi.mock('node-fetch', () => ({
@@ -51,82 +50,28 @@ interface Pokemon {
 }
 
 describe('Pokemon Data Ingestion', () => {
+  let testDb: TestDatabase;
   let db: Database.Database;
-  let testDbPath: string;
 
   beforeAll(async () => {
-    testDbPath = path.join(process.cwd(), 'test-ingestion.sqlite');
-
-    // Ensure test database is clean
-    try {
-      await fs.unlink(testDbPath);
-    } catch {
-      // File doesn't exist, that's fine
-    }
-
-    db = new Database(testDbPath);
-
-    // Create test schema (same as in ingestion)
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS pokemon (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        height INTEGER,
-        weight INTEGER,
-        base_experience INTEGER,
-        generation INTEGER,
-        species_url TEXT,
-        sprite_url TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS stats (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        pokemon_id INTEGER,
-        stat_name TEXT,
-        base_stat INTEGER,
-        effort INTEGER,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id)
-      );
-
-      CREATE TABLE IF NOT EXISTS pokemon_types (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        pokemon_id INTEGER,
-        type_name TEXT,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id)
-      );
-
-      CREATE TABLE IF NOT EXISTS pokemon_abilities (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        pokemon_id INTEGER,
-        ability_name TEXT,
-        is_hidden BOOLEAN,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon (id)
-      );
-
-      CREATE TABLE IF NOT EXISTS types (
-        id INTEGER PRIMARY KEY,
-        name TEXT UNIQUE NOT NULL
-      );
-    `);
+    // Create test database with production schema
+    testDb = new TestDatabase('ingestion-test');
+    testDb.insertTestData();
+    db = testDb.getDatabase();
   });
 
   afterAll(async () => {
-    db.close();
-    try {
-      await fs.unlink(testDbPath);
-    } catch {
-      // Ignore if file doesn't exist
+    if (testDb) {
+      await testDb.cleanup();
     }
   });
 
   beforeEach(() => {
-    // Clear all tables before each test
-    db.exec('DELETE FROM pokemon_abilities');
-    db.exec('DELETE FROM pokemon_types');
-    db.exec('DELETE FROM stats');
-    db.exec('DELETE FROM pokemon');
-    db.exec('DELETE FROM types');
+    // Clear all data before each test
+    testDb.clearData();
+
+    // Re-insert basic reference data needed for ingestion
+    testDb.insertTestData();
 
     // Reset all mocks
     vi.clearAllMocks();
@@ -144,6 +89,9 @@ describe('Pokemon Data Ingestion', () => {
       expect(tableNames).toContain('pokemon_types');
       expect(tableNames).toContain('pokemon_abilities');
       expect(tableNames).toContain('types');
+      expect(tableNames).toContain('abilities');
+      expect(tableNames).toContain('moves');
+      expect(tableNames).toContain('pokemon_moves');
     });
 
     it('should have correct pokemon table structure', () => {
@@ -243,21 +191,42 @@ describe('Pokemon Data Ingestion', () => {
       `);
       insertPokemon.run();
 
-      // Insert types
-      const types = ['grass', 'poison'];
+      // Insert types (using the production schema with separate types table)
+      const typeData = [
+        { id: 1, name: 'grass' },
+        { id: 2, name: 'poison' },
+      ];
 
-      const insertType = db.prepare(`
-        INSERT INTO pokemon_types (pokemon_id, type_name)
-        VALUES (?, ?)
+      // Types should already exist from test data, but ensure they're there
+      const insertTypeRecord = db.prepare(`
+        INSERT OR IGNORE INTO types (id, name) VALUES (?, ?)
+      `);
+      typeData.forEach((type) => {
+        insertTypeRecord.run(type.id, type.name);
+      });
+
+      // Insert pokemon-type relationships using correct production schema
+      const insertPokemonType = db.prepare(`
+        INSERT INTO pokemon_types (pokemon_id, type_id, slot)
+        VALUES (?, ?, ?)
       `);
 
-      types.forEach((type) => {
-        const result = insertType.run(1, type);
+      typeData.forEach((type, index) => {
+        const result = insertPokemonType.run(1, type.id, index + 1);
         expect(result.changes).toBe(1);
       });
 
+      // Retrieve types using JOIN (production-style query)
       const retrievedTypes = db
-        .prepare('SELECT type_name FROM pokemon_types WHERE pokemon_id = 1')
+        .prepare(
+          `
+          SELECT t.name as type_name 
+          FROM pokemon_types pt 
+          JOIN types t ON pt.type_id = t.id 
+          WHERE pt.pokemon_id = 1 
+          ORDER BY pt.slot
+        `
+        )
         .all() as any[];
       const typeNames = retrievedTypes.map((t) => t.type_name);
       expect(typeNames).toContain('grass');

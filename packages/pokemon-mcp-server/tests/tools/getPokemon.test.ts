@@ -1,101 +1,25 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import Database from 'better-sqlite3';
 import { GetPokemonTool } from '../../src/tools/getPokemon.js';
+import { TestDatabase } from '../helpers/testDatabase.js';
 
 describe('GetPokemonTool', () => {
+  let testDb: TestDatabase;
   let db: Database.Database;
   let tool: GetPokemonTool;
 
-  beforeEach(() => {
-    // Create an in-memory database for testing
-    db = new Database(':memory:');
-
-    // Create necessary tables
-    db.exec(`
-      CREATE TABLE pokemon (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        height INTEGER NOT NULL,
-        weight INTEGER NOT NULL,
-        base_experience INTEGER NOT NULL,
-        generation INTEGER NOT NULL,
-        species_url TEXT NOT NULL,
-        sprite_url TEXT NOT NULL
-      );
-
-      CREATE TABLE stats (
-        pokemon_id INTEGER NOT NULL,
-        stat_name TEXT NOT NULL,
-        base_stat INTEGER NOT NULL,
-        effort INTEGER NOT NULL,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon(id)
-      );
-
-      CREATE TABLE types (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL
-      );
-
-      CREATE TABLE pokemon_types (
-        pokemon_id INTEGER NOT NULL,
-        type_id INTEGER NOT NULL,
-        slot INTEGER NOT NULL,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon(id),
-        FOREIGN KEY (type_id) REFERENCES types(id)
-      );
-
-      CREATE TABLE abilities (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL
-      );
-
-      CREATE TABLE pokemon_abilities (
-        pokemon_id INTEGER NOT NULL,
-        ability_id INTEGER NOT NULL,
-        is_hidden BOOLEAN NOT NULL,
-        slot INTEGER NOT NULL,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon(id),
-        FOREIGN KEY (ability_id) REFERENCES abilities(id)
-      );
-    `);
-
-    // Insert test data
-    db.exec(`
-      INSERT INTO pokemon (id, name, height, weight, base_experience, generation, species_url, sprite_url)
-      VALUES 
-        (1, 'bulbasaur', 7, 69, 64, 1, 'https://pokeapi.co/api/v2/pokemon-species/1/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png'),
-        (25, 'pikachu', 4, 60, 112, 1, 'https://pokeapi.co/api/v2/pokemon-species/25/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png');
-
-      INSERT INTO types (id, name) VALUES (1, 'grass'), (2, 'poison'), (3, 'electric');
-
-      INSERT INTO pokemon_types (pokemon_id, type_id, slot) VALUES 
-        (1, 1, 1), (1, 2, 2),
-        (25, 3, 1);
-
-      INSERT INTO abilities (id, name) VALUES (1, 'overgrow'), (2, 'chlorophyll'), (3, 'static'), (4, 'lightning-rod');
-
-      INSERT INTO pokemon_abilities (pokemon_id, ability_id, is_hidden, slot)
-      VALUES 
-        (1, 1, false, 1), (1, 2, true, 2),
-        (25, 3, false, 1), (25, 4, true, 2);
-
-      INSERT INTO stats (pokemon_id, stat_name, base_stat, effort)
-      VALUES 
-        (1, 'hp', 45, 0),
-        (1, 'attack', 49, 0),
-        (1, 'defense', 49, 0),
-        (1, 'special-attack', 65, 1),
-        (1, 'special-defense', 65, 0),
-        (1, 'speed', 45, 0),
-        (25, 'hp', 35, 0),
-        (25, 'attack', 55, 0),
-        (25, 'defense', 40, 0),
-        (25, 'special-attack', 50, 0),
-        (25, 'special-defense', 50, 0),
-        (25, 'speed', 90, 2);
-    `);
-
+  beforeAll(async () => {
+    // Create test database with production schema and data
+    testDb = new TestDatabase('get-pokemon-test');
+    testDb.insertTestData();
+    db = testDb.getDatabase();
     tool = new GetPokemonTool(db);
+  });
+
+  afterAll(async () => {
+    if (testDb) {
+      await testDb.cleanup();
+    }
   });
 
   describe('Basic functionality', () => {
