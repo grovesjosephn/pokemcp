@@ -1,8 +1,20 @@
 import Database from 'better-sqlite3';
 import { ToolResponse } from '../types/index.js';
+import {
+  ResponseFormatter,
+  TypeEffectivenessData,
+  MarkdownFormatter,
+} from '../formatters/index.js';
 
 export class GetTypeEffectivenessTool {
-  constructor(private db: Database.Database) {}
+  private formatter: ResponseFormatter;
+
+  constructor(
+    private db: Database.Database,
+    formatter?: ResponseFormatter
+  ) {
+    this.formatter = formatter || new MarkdownFormatter();
+  }
 
   async execute(type: string, includePokemon = false): Promise<ToolResponse> {
     // Check if type exists
@@ -21,12 +33,11 @@ export class GetTypeEffectivenessTool {
       };
     }
 
-    const typeDisplayName =
-      type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-    let result = `# ${typeDisplayName} Type Analysis\n\n`;
+    let pokemonList: Array<{ id: number; name: string; generation: number }> =
+      [];
 
     if (includePokemon) {
-      const pokemon = this.db
+      pokemonList = this.db
         .prepare(
           `
         SELECT p.name, p.id, p.generation
@@ -39,23 +50,14 @@ export class GetTypeEffectivenessTool {
       `
         )
         .all(type) as Array<{ name: string; id: number; generation: number }>;
-
-      result += `## Pokemon with ${typeDisplayName.toLowerCase()} type (showing first 20):\n\n`;
-      result += pokemon
-        .map(
-          (p) =>
-            `- **${p.name.charAt(0).toUpperCase() + p.name.slice(1)}** (#${p.id}) - Gen ${p.generation}`
-        )
-        .join('\n');
     }
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: result,
-        },
-      ],
+    const typeEffectivenessData: TypeEffectivenessData = {
+      typeName: type,
+      includePokemon,
+      pokemonList,
     };
+
+    return this.formatter.formatTypeEffectiveness(typeEffectivenessData);
   }
 }

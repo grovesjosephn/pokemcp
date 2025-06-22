@@ -1,72 +1,45 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Database from 'better-sqlite3';
 import { GetPokemonStatsTool } from '../../src/tools/getPokemonStats.js';
+import { TestDatabase } from '../helpers/testDatabase.js';
 
 describe('GetPokemonStatsTool', () => {
+  let testDb: TestDatabase;
   let db: Database.Database;
   let tool: GetPokemonStatsTool;
 
-  beforeEach(() => {
-    // Create an in-memory database for testing
-    db = new Database(':memory:');
-
-    // Create necessary tables
-    db.exec(`
-      CREATE TABLE pokemon (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        height INTEGER NOT NULL,
-        weight INTEGER NOT NULL,
-        base_experience INTEGER NOT NULL,
-        generation INTEGER NOT NULL,
-        species_url TEXT NOT NULL,
-        sprite_url TEXT NOT NULL
-      );
-
-      CREATE TABLE stats (
-        pokemon_id INTEGER NOT NULL,
-        stat_name TEXT NOT NULL,
-        base_stat INTEGER NOT NULL,
-        effort INTEGER NOT NULL,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon(id)
-      );
-    `);
-
-    // Insert test data
-    db.exec(`
-      INSERT INTO pokemon (id, name, height, weight, base_experience, generation, species_url, sprite_url)
-      VALUES (1, 'bulbasaur', 7, 69, 64, 1, 'https://pokeapi.co/api/v2/pokemon-species/1/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png');
-
-      INSERT INTO stats (pokemon_id, stat_name, base_stat, effort)
-      VALUES 
-        (1, 'hp', 45, 0),
-        (1, 'attack', 49, 0),
-        (1, 'defense', 49, 0),
-        (1, 'special-attack', 65, 1),
-        (1, 'special-defense', 65, 0),
-        (1, 'speed', 45, 0);
-    `);
-
+  beforeAll(async () => {
+    // Create test database with production schema and data
+    testDb = new TestDatabase('get-pokemon-stats-test');
+    testDb.insertTestData();
+    db = testDb.getDatabase();
     tool = new GetPokemonStatsTool(db);
+  });
+
+  afterAll(async () => {
+    if (testDb) {
+      await testDb.cleanup();
+    }
   });
 
   it('should return Pokemon stats when found by ID', async () => {
     const result = await tool.execute('1');
-    expect(result.content[0].text).toContain('# bulbasaur - Detailed Stats');
-    expect(result.content[0].text).toContain('**hp:** 45 (EV: 0)');
-    expect(result.content[0].text).toContain('**attack:** 49 (EV: 0)');
-    expect(result.content[0].text).toContain('**special-attack:** 65 (EV: 1)');
+    expect(result.content[0].text).toContain('# Bulbasaur - Detailed Stats');
+    expect(result.content[0].text).toContain('**HP:** 45');
+    expect(result.content[0].text).toContain('**ATTACK:** 49');
+    expect(result.content[0].text).toContain('**SPECIAL-ATTACK:** 65');
+    expect(result.content[0].text).toContain('*EV Yield: 1*');
   });
 
   it('should return Pokemon stats when found by name', async () => {
     const result = await tool.execute('bulbasaur');
-    expect(result.content[0].text).toContain('# bulbasaur - Detailed Stats');
-    expect(result.content[0].text).toContain('**hp:** 45 (EV: 0)');
+    expect(result.content[0].text).toContain('# Bulbasaur - Detailed Stats');
+    expect(result.content[0].text).toContain('**HP:** 45');
   });
 
   it('should handle case-insensitive name search', async () => {
     const result = await tool.execute('BULBASAUR');
-    expect(result.content[0].text).toContain('# bulbasaur - Detailed Stats');
+    expect(result.content[0].text).toContain('# Bulbasaur - Detailed Stats');
   });
 
   it('should return error message for non-existent Pokemon', async () => {
@@ -76,34 +49,28 @@ describe('GetPokemonStatsTool', () => {
 
   it('should calculate total stats correctly', async () => {
     const result = await tool.execute('1');
-    const totalStats = 45 + 49 + 49 + 65 + 65 + 45;
+    const totalStats = 45 + 49 + 49 + 65 + 65 + 45; // 318
     expect(result.content[0].text).toContain(
-      `**Total Base Stats:** ${totalStats}`
+      `- **Total Base Stats:** ${totalStats}`
     );
   });
 
-  it('should calculate stat distribution percentages correctly', async () => {
+  it('should show stat summary with highest and lowest stats', async () => {
     const result = await tool.execute('1');
-    const totalStats = 45 + 49 + 49 + 65 + 65 + 45;
-    const hpPercentage = ((45 / totalStats) * 100).toFixed(1);
-    expect(result.content[0].text).toContain(
-      `hp: ${hpPercentage}% of total stats`
-    );
+    expect(result.content[0].text).toContain('## Summary');
+    expect(result.content[0].text).toContain('- **Average Stat:**');
+    expect(result.content[0].text).toContain('- **Highest Stat:**');
+    expect(result.content[0].text).toContain('- **Lowest Stat:**');
   });
 
   it('should order stats in the correct sequence', async () => {
     const result = await tool.execute('1');
-    const statsSection = result.content[0].text
-      .split('## Base Stats')[1]
-      .split('## Stat Distribution')[0];
-    const stats = statsSection
-      .split('\n')
-      .filter((line) => line.startsWith('**'));
-    expect(stats[0]).toContain('hp');
-    expect(stats[1]).toContain('attack');
-    expect(stats[2]).toContain('defense');
-    expect(stats[3]).toContain('special-attack');
-    expect(stats[4]).toContain('special-defense');
-    expect(stats[5]).toContain('speed');
+    const text = result.content[0].text;
+    const hpIndex = text.indexOf('**HP:**');
+    const attackIndex = text.indexOf('**ATTACK:**');
+    const speedIndex = text.indexOf('**SPEED:**');
+
+    expect(hpIndex).toBeLessThan(attackIndex);
+    expect(attackIndex).toBeLessThan(speedIndex);
   });
 });
