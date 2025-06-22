@@ -1,77 +1,34 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { SearchPokemonTool } from '../../src/tools/searchPokemon.js';
+import { TestDatabase } from '../helpers/testDatabase.js';
 
 describe('SearchPokemonTool', () => {
-  let db: Database.Database;
+  let testDb: TestDatabase;
   let tool: SearchPokemonTool;
 
   beforeEach(() => {
-    // Create an in-memory database for testing
-    db = new Database(':memory:');
+    // Use centralized test database with complete schema
+    testDb = new TestDatabase('searchPokemon');
+    testDb.insertTestData();
 
-    // Create necessary tables
-    db.exec(`
-      CREATE TABLE pokemon (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        height INTEGER NOT NULL,
-        weight INTEGER NOT NULL,
-        base_experience INTEGER NOT NULL,
-        generation INTEGER NOT NULL,
-        species_url TEXT NOT NULL,
-        sprite_url TEXT NOT NULL
-      );
-
-      CREATE TABLE types (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL
-      );
-
-      CREATE TABLE pokemon_types (
-        pokemon_id INTEGER NOT NULL,
-        type_id INTEGER NOT NULL,
-        slot INTEGER NOT NULL,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon(id),
-        FOREIGN KEY (type_id) REFERENCES types(id)
-      );
-
-      CREATE TABLE stats (
-        pokemon_id INTEGER NOT NULL,
-        stat_name TEXT NOT NULL,
-        base_stat INTEGER NOT NULL,
-        effort INTEGER NOT NULL,
-        FOREIGN KEY (pokemon_id) REFERENCES pokemon(id)
-      );
-    `);
-
-    // Insert test data
+    // Add additional test Pokemon for search testing
+    const db = testDb.getDatabase();
     db.exec(`
       INSERT INTO pokemon (id, name, height, weight, base_experience, generation, species_url, sprite_url)
       VALUES 
-        (1, 'bulbasaur', 7, 69, 64, 1, 'https://pokeapi.co/api/v2/pokemon-species/1/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png'),
         (4, 'charmander', 6, 85, 62, 1, 'https://pokeapi.co/api/v2/pokemon-species/4/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png'),
         (7, 'squirtle', 5, 90, 63, 1, 'https://pokeapi.co/api/v2/pokemon-species/7/', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png');
 
       INSERT INTO types (id, name) VALUES 
-        (1, 'grass'),
-        (2, 'poison'),
-        (3, 'fire'),
-        (4, 'water');
+        (5, 'fire'),
+        (6, 'water');
 
       INSERT INTO pokemon_types (pokemon_id, type_id, slot) VALUES 
-        (1, 1, 1), (1, 2, 2),
-        (4, 3, 1),
-        (7, 4, 1);
+        (4, 5, 1),
+        (7, 6, 1);
 
       INSERT INTO stats (pokemon_id, stat_name, base_stat, effort)
       VALUES 
-        (1, 'hp', 45, 0),
-        (1, 'attack', 49, 0),
-        (1, 'defense', 49, 0),
-        (1, 'special-attack', 65, 1),
-        (1, 'special-defense', 65, 0),
-        (1, 'speed', 45, 0),
         (4, 'hp', 39, 0),
         (4, 'attack', 52, 0),
         (4, 'defense', 43, 0),
@@ -84,9 +41,25 @@ describe('SearchPokemonTool', () => {
         (7, 'special-attack', 50, 0),
         (7, 'special-defense', 64, 0),
         (7, 'speed', 43, 0);
+
+      INSERT INTO abilities (id, name) VALUES 
+        (6, 'blaze'),
+        (7, 'torrent'),
+        (8, 'solar-power'),
+        (9, 'rain-dish');
+
+      INSERT INTO pokemon_abilities (pokemon_id, ability_id, is_hidden, slot) VALUES 
+        (4, 6, 0, 1),
+        (4, 8, 1, 3),
+        (7, 7, 0, 1),
+        (7, 9, 1, 3);
     `);
 
-    tool = new SearchPokemonTool(db);
+    tool = new SearchPokemonTool(testDb.getDatabase());
+  });
+
+  afterEach(async () => {
+    await testDb.cleanup();
   });
 
   it('should return all Pokemon when no filters are applied', async () => {
