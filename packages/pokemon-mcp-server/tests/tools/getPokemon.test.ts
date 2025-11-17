@@ -87,15 +87,16 @@ describe('GetPokemonTool', () => {
   });
 
   describe('Performance and Database optimization', () => {
-    it('should execute with optimized single query approach', async () => {
+    it('should execute with centralized query architecture', async () => {
       // Create a fresh tool instance to spy on the constructor behavior
       const prepareSpy = vi.spyOn(db, 'prepare');
       const optimizedTool = new GetPokemonTool(db);
 
-      // Should prepare exactly one statement in constructor (our optimized query)
-      expect(prepareSpy).toHaveBeenCalledTimes(1);
+      // Should prepare statements for all query modules during DatabaseService initialization
+      // Each query module prepares its own statements, resulting in multiple prepare calls
+      expect(prepareSpy.mock.calls.length).toBeGreaterThan(1);
 
-      // Verify the tool works correctly with optimization
+      // Verify the tool works correctly with centralized queries
       const result = await optimizedTool.execute('1');
       expect(result.content[0].text).toContain('Bulbasaur');
       expect(result.content[0].text).toContain('**Types:** grass, poison');
@@ -103,7 +104,7 @@ describe('GetPokemonTool', () => {
         '**Abilities:** overgrow, chlorophyll (Hidden)'
       );
 
-      // Should not call prepare again during execution (reuses prepared statement)
+      // Should not call prepare again during execution (reuses prepared statements)
       const prepareCallsBeforeSecondExecution = prepareSpy.mock.calls.length;
       await optimizedTool.execute('25');
       expect(prepareSpy.mock.calls.length).toBe(

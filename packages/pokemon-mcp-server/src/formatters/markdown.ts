@@ -4,6 +4,7 @@ import {
   PokemonComparisonData,
   PokemonSearchResults,
   TypeEffectivenessData,
+  StrongestPokemonData,
 } from './base.js';
 import { ToolResponse } from '../types/index.js';
 
