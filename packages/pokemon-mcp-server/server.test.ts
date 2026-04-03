@@ -15,12 +15,6 @@ interface Pokemon {
   created_at?: string;
 }
 
-interface Stat {
-  stat_name: string;
-  base_stat: number;
-  effort: number;
-}
-
 describe("Pokemon MCP Server", () => {
   let testDb: TestDatabase;
   let db: Database;

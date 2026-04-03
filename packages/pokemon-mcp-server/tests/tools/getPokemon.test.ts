@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll, spyOn } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, spyOn } from "bun:test";
 import { Database } from "bun:sqlite";
 import { GetPokemonTool } from "../../src/tools/getPokemon.js";
 import { TestDatabase } from "../helpers/testDatabase.js";

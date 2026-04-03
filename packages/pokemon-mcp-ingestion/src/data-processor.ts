@@ -1,4 +1,4 @@
-import { PokeApiClient, Pokemon, SpeciesResponse } from "./api-client.js";
+import { PokeApiClient, Pokemon } from "./api-client.js";
 import { PokemonDatabase } from "./database.js";
 import { IngestionConfig } from "./config.js";
 
