@@ -1,6 +1,6 @@
-import { Database } from 'bun:sqlite';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { Database } from "bun:sqlite";
+import { promises as fs } from "fs";
+import path from "path";
 
 /**
  * Test Database Helper
@@ -11,14 +11,11 @@ export class TestDatabase {
   private db: Database;
   private dbPath: string;
 
-  constructor(testName: string = 'test') {
+  constructor(testName: string = "test") {
     // Create unique test database for each test suite with timestamp to avoid conflicts
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(7);
-    this.dbPath = path.join(
-      process.cwd(),
-      `${testName}-${timestamp}-${randomId}.sqlite`
-    );
+    this.dbPath = path.join(process.cwd(), `${testName}-${timestamp}-${randomId}.sqlite`);
     this.db = new Database(this.dbPath);
     this.setupProductionSchema();
   }
@@ -29,7 +26,7 @@ export class TestDatabase {
    */
   private setupProductionSchema(): void {
     // Enable foreign keys (important for data integrity in tests)
-    this.db.exec('PRAGMA foreign_keys = ON');
+    this.db.exec("PRAGMA foreign_keys = ON");
 
     // Create tables exactly as they exist in production
     this.db.exec(`
@@ -121,41 +118,41 @@ export class TestDatabase {
     const pokemon = [
       {
         id: 1,
-        name: 'bulbasaur',
+        name: "bulbasaur",
         height: 7,
         weight: 69,
         base_experience: 64,
         generation: 1,
-        species_url: 'https://pokeapi.co/api/v2/pokemon-species/1/',
+        species_url: "https://pokeapi.co/api/v2/pokemon-species/1/",
         sprite_url:
-          'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png',
+          "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",
       },
       {
         id: 25,
-        name: 'pikachu',
+        name: "pikachu",
         height: 4,
         weight: 60,
         base_experience: 112,
         generation: 1,
-        species_url: 'https://pokeapi.co/api/v2/pokemon-species/25/',
+        species_url: "https://pokeapi.co/api/v2/pokemon-species/25/",
         sprite_url:
-          'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',
+          "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
       },
       {
         id: 150,
-        name: 'mewtwo',
+        name: "mewtwo",
         height: 20,
         weight: 1220,
         base_experience: 340,
         generation: 1,
-        species_url: 'https://pokeapi.co/api/v2/pokemon-species/150/',
+        species_url: "https://pokeapi.co/api/v2/pokemon-species/150/",
         sprite_url:
-          'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png',
+          "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png",
       },
     ];
 
     const insertPokemon = this.db.prepare(
-      'INSERT INTO pokemon (id, name, height, weight, base_experience, generation, species_url, sprite_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      "INSERT INTO pokemon (id, name, height, weight, base_experience, generation, species_url, sprite_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     );
 
     pokemon.forEach((p) =>
@@ -167,68 +164,64 @@ export class TestDatabase {
         p.base_experience,
         p.generation,
         p.species_url,
-        p.sprite_url
-      )
+        p.sprite_url,
+      ),
     );
 
     // Insert comprehensive test stats
     const stats = [
       // Bulbasaur stats
-      { pokemon_id: 1, stat_name: 'hp', base_stat: 45, effort: 0 },
-      { pokemon_id: 1, stat_name: 'attack', base_stat: 49, effort: 0 },
-      { pokemon_id: 1, stat_name: 'defense', base_stat: 49, effort: 0 },
-      { pokemon_id: 1, stat_name: 'special-attack', base_stat: 65, effort: 1 },
-      { pokemon_id: 1, stat_name: 'special-defense', base_stat: 65, effort: 0 },
-      { pokemon_id: 1, stat_name: 'speed', base_stat: 45, effort: 0 },
+      { pokemon_id: 1, stat_name: "hp", base_stat: 45, effort: 0 },
+      { pokemon_id: 1, stat_name: "attack", base_stat: 49, effort: 0 },
+      { pokemon_id: 1, stat_name: "defense", base_stat: 49, effort: 0 },
+      { pokemon_id: 1, stat_name: "special-attack", base_stat: 65, effort: 1 },
+      { pokemon_id: 1, stat_name: "special-defense", base_stat: 65, effort: 0 },
+      { pokemon_id: 1, stat_name: "speed", base_stat: 45, effort: 0 },
       // Pikachu stats
-      { pokemon_id: 25, stat_name: 'hp', base_stat: 35, effort: 0 },
-      { pokemon_id: 25, stat_name: 'attack', base_stat: 55, effort: 0 },
-      { pokemon_id: 25, stat_name: 'defense', base_stat: 40, effort: 0 },
-      { pokemon_id: 25, stat_name: 'special-attack', base_stat: 50, effort: 0 },
+      { pokemon_id: 25, stat_name: "hp", base_stat: 35, effort: 0 },
+      { pokemon_id: 25, stat_name: "attack", base_stat: 55, effort: 0 },
+      { pokemon_id: 25, stat_name: "defense", base_stat: 40, effort: 0 },
+      { pokemon_id: 25, stat_name: "special-attack", base_stat: 50, effort: 0 },
       {
         pokemon_id: 25,
-        stat_name: 'special-defense',
+        stat_name: "special-defense",
         base_stat: 50,
         effort: 0,
       },
-      { pokemon_id: 25, stat_name: 'speed', base_stat: 90, effort: 2 },
+      { pokemon_id: 25, stat_name: "speed", base_stat: 90, effort: 2 },
       // Mewtwo stats
-      { pokemon_id: 150, stat_name: 'hp', base_stat: 106, effort: 0 },
-      { pokemon_id: 150, stat_name: 'attack', base_stat: 110, effort: 0 },
-      { pokemon_id: 150, stat_name: 'defense', base_stat: 90, effort: 0 },
+      { pokemon_id: 150, stat_name: "hp", base_stat: 106, effort: 0 },
+      { pokemon_id: 150, stat_name: "attack", base_stat: 110, effort: 0 },
+      { pokemon_id: 150, stat_name: "defense", base_stat: 90, effort: 0 },
       {
         pokemon_id: 150,
-        stat_name: 'special-attack',
+        stat_name: "special-attack",
         base_stat: 154,
         effort: 3,
       },
       {
         pokemon_id: 150,
-        stat_name: 'special-defense',
+        stat_name: "special-defense",
         base_stat: 90,
         effort: 0,
       },
-      { pokemon_id: 150, stat_name: 'speed', base_stat: 130, effort: 0 },
+      { pokemon_id: 150, stat_name: "speed", base_stat: 130, effort: 0 },
     ];
 
     const insertStat = this.db.prepare(
-      'INSERT INTO stats (pokemon_id, stat_name, base_stat, effort) VALUES (?, ?, ?, ?)'
+      "INSERT INTO stats (pokemon_id, stat_name, base_stat, effort) VALUES (?, ?, ?, ?)",
     );
-    stats.forEach((s) =>
-      insertStat.run(s.pokemon_id, s.stat_name, s.base_stat, s.effort)
-    );
+    stats.forEach((s) => insertStat.run(s.pokemon_id, s.stat_name, s.base_stat, s.effort));
 
     // Insert types
     const types = [
-      { id: 1, name: 'grass' },
-      { id: 2, name: 'poison' },
-      { id: 3, name: 'electric' },
-      { id: 4, name: 'psychic' },
+      { id: 1, name: "grass" },
+      { id: 2, name: "poison" },
+      { id: 3, name: "electric" },
+      { id: 4, name: "psychic" },
     ];
 
-    const insertType = this.db.prepare(
-      'INSERT INTO types (id, name) VALUES (?, ?)'
-    );
+    const insertType = this.db.prepare("INSERT INTO types (id, name) VALUES (?, ?)");
     types.forEach((t) => insertType.run(t.id, t.name));
 
     // Insert pokemon-type relationships
@@ -240,24 +233,20 @@ export class TestDatabase {
     ];
 
     const insertPokemonType = this.db.prepare(
-      'INSERT INTO pokemon_types (pokemon_id, type_id, slot) VALUES (?, ?, ?)'
+      "INSERT INTO pokemon_types (pokemon_id, type_id, slot) VALUES (?, ?, ?)",
     );
-    pokemonTypes.forEach((pt) =>
-      insertPokemonType.run(pt.pokemon_id, pt.type_id, pt.slot)
-    );
+    pokemonTypes.forEach((pt) => insertPokemonType.run(pt.pokemon_id, pt.type_id, pt.slot));
 
     // Insert abilities
     const abilities = [
-      { id: 1, name: 'overgrow' },
-      { id: 2, name: 'static' },
-      { id: 3, name: 'pressure' },
-      { id: 4, name: 'chlorophyll' }, // Bulbasaur hidden ability
-      { id: 5, name: 'lightning-rod' }, // Pikachu hidden ability
+      { id: 1, name: "overgrow" },
+      { id: 2, name: "static" },
+      { id: 3, name: "pressure" },
+      { id: 4, name: "chlorophyll" }, // Bulbasaur hidden ability
+      { id: 5, name: "lightning-rod" }, // Pikachu hidden ability
     ];
 
-    const insertAbility = this.db.prepare(
-      'INSERT INTO abilities (id, name) VALUES (?, ?)'
-    );
+    const insertAbility = this.db.prepare("INSERT INTO abilities (id, name) VALUES (?, ?)");
     abilities.forEach((a) => insertAbility.run(a.id, a.name));
 
     // Insert pokemon-ability relationships
@@ -270,15 +259,10 @@ export class TestDatabase {
     ];
 
     const insertPokemonAbility = this.db.prepare(
-      'INSERT INTO pokemon_abilities (pokemon_id, ability_id, is_hidden, slot) VALUES (?, ?, ?, ?)'
+      "INSERT INTO pokemon_abilities (pokemon_id, ability_id, is_hidden, slot) VALUES (?, ?, ?, ?)",
     );
     pokemonAbilities.forEach((pa) =>
-      insertPokemonAbility.run(
-        pa.pokemon_id,
-        pa.ability_id,
-        pa.is_hidden ? 1 : 0,
-        pa.slot
-      )
+      insertPokemonAbility.run(pa.pokemon_id, pa.ability_id, pa.is_hidden ? 1 : 0, pa.slot),
     );
   }
 
@@ -306,7 +290,7 @@ export class TestDatabase {
    */
   clearData(): void {
     // Disable foreign keys temporarily for cascading deletes
-    this.db.exec('PRAGMA foreign_keys = OFF');
+    this.db.exec("PRAGMA foreign_keys = OFF");
 
     // Clear tables in dependency order
     this.db.exec(`
@@ -321,7 +305,7 @@ export class TestDatabase {
     `);
 
     // Re-enable foreign keys
-    this.db.exec('PRAGMA foreign_keys = ON');
+    this.db.exec("PRAGMA foreign_keys = ON");
   }
 }
 

@@ -4,8 +4,8 @@ import {
   PokemonComparisonData,
   PokemonSearchResults,
   TypeEffectivenessData,
-} from './base.js';
-import { ToolResponse } from '../types/index.js';
+} from "./base.js";
+import { ToolResponse } from "../types/index.js";
 
 /**
  * Markdown formatter - implements the current formatting logic
@@ -24,18 +24,18 @@ export class MarkdownFormatter extends ResponseFormatter {
 - Weight: ${this.formatWeight(pokemon.weight)}
 - Base Experience: ${pokemon.base_experience}
 
-**Types:** ${pokemon.types.map((t) => t.name).join(', ')}
+**Types:** ${pokemon.types.map((t) => t.name).join(", ")}
 
-**Abilities:** ${pokemon.abilities.map((a) => a.name + (a.is_hidden ? ' (Hidden)' : '')).join(', ')}
+**Abilities:** ${pokemon.abilities.map((a) => a.name + (a.is_hidden ? " (Hidden)" : "")).join(", ")}
 
 **Base Stats:**
-${pokemon.stats.map((s) => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
+${pokemon.stats.map((s) => `- ${s.stat_name}: ${s.base_stat}`).join("\n")}
 - **Total: ${totalStats}**`;
 
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: response,
         },
       ],
@@ -52,7 +52,7 @@ ${pokemon.stats.map((s) => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
 ## ${pokemon1Name} vs ${pokemon2Name}
 
 | Attribute | ${pokemon1Name} | ${pokemon2Name} |
-|-----------|${'-'.repeat(pokemon1Name.length)}|${'-'.repeat(pokemon2Name.length)}|
+|-----------|${"-".repeat(pokemon1Name.length)}|${"-".repeat(pokemon2Name.length)}|
 | ID | #${pokemon1.id} | #${pokemon2.id} |
 | Generation | ${pokemon1.generation} | ${pokemon2.generation} |
 | Height | ${this.formatHeight(pokemon1.height)} | ${this.formatHeight(pokemon2.height)} |
@@ -61,7 +61,7 @@ ${pokemon.stats.map((s) => `- ${s.stat_name}: ${s.base_stat}`).join('\n')}
 ## Stat Comparison
 
 | Stat | ${pokemon1Name} | ${pokemon2Name} | Difference |
-|------|${'-'.repeat(pokemon1Name.length)}|${'-'.repeat(pokemon2Name.length)}|------------|
+|------|${"-".repeat(pokemon1Name.length)}|${"-".repeat(pokemon2Name.length)}|------------|
 ${pokemon1.stats
   .map((stat) => {
     const stat2 = pokemon2.stats.find((s) => s.stat_name === stat.stat_name);
@@ -69,14 +69,14 @@ ${pokemon1.stats
     const diffStr = diff > 0 ? `+${diff}` : diff.toString();
     return `| ${stat.stat_name} | ${stat.base_stat} | ${stat2?.base_stat ?? 0} | ${diffStr} |`;
   })
-  .join('\n')}
+  .join("\n")}
 
 **Total Stats:** ${this.calculateStatsTotal(pokemon1.stats)} vs ${this.calculateStatsTotal(pokemon2.stats)}`;
 
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: comparisonText,
         },
       ],
@@ -85,7 +85,7 @@ ${pokemon1.stats
 
   formatSearchResults(results: PokemonSearchResults): ToolResponse {
     if (results.results.length === 0) {
-      return this.formatError('No Pokemon found matching the criteria.');
+      return this.formatError("No Pokemon found matching the criteria.");
     }
 
     const resultsText = `# Search Results (${results.totalCount} found)
@@ -94,14 +94,14 @@ ${results.results
   .map((pokemon) => {
     const pokemonName = this.capitalizeName(pokemon.name);
     return `**${pokemonName}** (#${pokemon.id}) - Gen ${pokemon.generation}
-  Types: ${pokemon.types.join(', ')}`;
+  Types: ${pokemon.types.join(", ")}`;
   })
-  .join('\n\n')}`;
+  .join("\n\n")}`;
 
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: resultsText,
         },
       ],
@@ -115,17 +115,14 @@ ${results.results
     if (data.includePokemon && data.pokemonList.length > 0) {
       result += `## Pokemon with ${typeName.toLowerCase()} type (showing first 20):\n\n`;
       result += data.pokemonList
-        .map(
-          (p) =>
-            `- **${this.capitalizeName(p.name)}** (#${p.id}) - Gen ${p.generation}`
-        )
-        .join('\n');
+        .map((p) => `- **${this.capitalizeName(p.name)}** (#${p.id}) - Gen ${p.generation}`)
+        .join("\n");
     }
 
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: result,
         },
       ],
@@ -143,13 +140,12 @@ ${pokemon.stats
   .map((stat) => {
     const percentage = Math.round((stat.base_stat / 255) * 100); // Max stat is typically 255
     const bar =
-      '█'.repeat(Math.floor(percentage / 5)) +
-      '░'.repeat(20 - Math.floor(percentage / 5));
+      "█".repeat(Math.floor(percentage / 5)) + "░".repeat(20 - Math.floor(percentage / 5));
     return `**${stat.stat_name.toUpperCase()}:** ${stat.base_stat}
 ${bar} (${percentage}%)
 *EV Yield: ${stat.effort}*`;
   })
-  .join('\n\n')}
+  .join("\n\n")}
 
 ## Summary
 - **Total Base Stats:** ${totalStats}
@@ -160,7 +156,7 @@ ${bar} (${percentage}%)
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: statsText,
         },
       ],
@@ -169,12 +165,10 @@ ${bar} (${percentage}%)
 
   formatStrongestPokemon(data: StrongestPokemonData): ToolResponse {
     if (data.results.length === 0) {
-      return this.formatError(
-        `No Pokemon found for criteria: ${data.criteria.criteria}`
-      );
+      return this.formatError(`No Pokemon found for criteria: ${data.criteria.criteria}`);
     }
 
-    const criteriaFormatted = data.criteria.criteria.replace('_', ' ');
+    const criteriaFormatted = data.criteria.criteria.replace("_", " ");
 
     const resultText = `# Strongest Pokemon by ${criteriaFormatted}
 
@@ -182,14 +176,14 @@ ${data.results
   .map(
     (p, index) =>
       `${index + 1}. **${this.capitalizeName(p.name)}** (#${p.id}) - Gen ${p.generation}
-   ${criteriaFormatted}: ${p.statValue}`
+   ${criteriaFormatted}: ${p.statValue}`,
   )
-  .join('\n\n')}`;
+  .join("\n\n")}`;
 
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: resultText,
         },
       ],
@@ -200,7 +194,7 @@ ${data.results
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: `❌ **Error:** ${message}`,
         },
       ],
@@ -211,7 +205,7 @@ ${data.results
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: `Pokemon "${identifier}" not found.`,
         },
       ],

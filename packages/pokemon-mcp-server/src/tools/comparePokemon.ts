@@ -1,15 +1,11 @@
-import { Database, type Statement } from 'bun:sqlite';
-import { ToolResponse } from '../types/index.js';
+import { Database, type Statement } from "bun:sqlite";
+import { ToolResponse } from "../types/index.js";
 import {
   ResponseFormatter,
   PokemonComparisonData,
   MarkdownFormatter,
-} from '../formatters/index.js';
-import {
-  PokemonCompleteRow,
-  preparePokemonQuery,
-  rowsToPokemonData,
-} from './pokemonQuery.js';
+} from "../formatters/index.js";
+import { PokemonCompleteRow, preparePokemonQuery, rowsToPokemonData } from "./pokemonQuery.js";
 
 export class ComparePokemonTool {
   private preparedQuery: Statement;
@@ -17,24 +13,15 @@ export class ComparePokemonTool {
 
   constructor(
     private db: Database,
-    formatter?: ResponseFormatter
+    formatter?: ResponseFormatter,
   ) {
     this.formatter = formatter || new MarkdownFormatter();
     this.preparedQuery = preparePokemonQuery(this.db);
   }
 
-  async execute(
-    identifier1: string,
-    identifier2: string
-  ): Promise<ToolResponse> {
-    const rows1 = this.preparedQuery.all(
-      identifier1,
-      identifier1
-    ) as PokemonCompleteRow[];
-    const rows2 = this.preparedQuery.all(
-      identifier2,
-      identifier2
-    ) as PokemonCompleteRow[];
+  async execute(identifier1: string, identifier2: string): Promise<ToolResponse> {
+    const rows1 = this.preparedQuery.all(identifier1, identifier1) as PokemonCompleteRow[];
+    const rows2 = this.preparedQuery.all(identifier2, identifier2) as PokemonCompleteRow[];
 
     const pokemon1 = rowsToPokemonData(rows1);
     if (!pokemon1) {

@@ -2,11 +2,17 @@
   "name": "pokemon-mcp-ingestion",
   "version": "1.0.0",
   "description": "Pokemon data ingestion for MCP server",
-  "type": "module",
-  "main": "dist/index.js",
+  "keywords": [
+    "api",
+    "mcp",
+    "pokemon",
+    "sqlite"
+  ],
   "bin": {
     "pokemon-mcp-ingestion": "dist/index.js"
   },
+  "type": "module",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "dev": "bun --watch index.ts",
@@ -16,19 +22,14 @@
     "test:watch": "bun test --watch",
     "test:run": "bun test",
     "clean": "rm -rf dist",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "lint": "oxlint .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check ."
   },
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.11.30",
     "bun-types": "latest",
     "typescript": "^5.4.2"
-  },
-  "keywords": [
-    "pokemon",
-    "mcp",
-    "sqlite",
-    "api"
-  ]
+  }
 }

@@ -4,8 +4,8 @@ import {
   PokemonComparisonData,
   PokemonSearchResults,
   TypeEffectivenessData,
-} from './base.js';
-import { ToolResponse } from '../types/index.js';
+} from "./base.js";
+import { ToolResponse } from "../types/index.js";
 
 /**
  * JSON formatter - provides structured data output
@@ -39,7 +39,7 @@ export class JsonFormatter extends ResponseFormatter {
             };
             return acc;
           },
-          {} as Record<string, { base_stat: number; effort: number }>
+          {} as Record<string, { base_stat: number; effort: number }>,
         ),
         total: totalStats,
         average: Math.round(totalStats / pokemon.stats.length),
@@ -53,7 +53,7 @@ export class JsonFormatter extends ResponseFormatter {
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: `# ${this.capitalizeName(pokemon.name)} Data\n\n\`\`\`json\n${JSON.stringify(structuredData, null, 2)}\n\`\`\``,
         },
       ],
@@ -82,9 +82,7 @@ export class JsonFormatter extends ResponseFormatter {
           total_stats: this.calculateStatsTotal(pokemon2.stats),
         },
         stat_differences: pokemon1.stats.map((stat) => {
-          const stat2 = pokemon2.stats.find(
-            (s) => s.stat_name === stat.stat_name
-          );
+          const stat2 = pokemon2.stats.find((s) => s.stat_name === stat.stat_name);
           return {
             stat_name: stat.stat_name,
             pokemon1_value: stat.base_stat,
@@ -94,13 +92,11 @@ export class JsonFormatter extends ResponseFormatter {
         }),
         summary: {
           stronger_pokemon:
-            this.calculateStatsTotal(pokemon1.stats) >
-            this.calculateStatsTotal(pokemon2.stats)
+            this.calculateStatsTotal(pokemon1.stats) > this.calculateStatsTotal(pokemon2.stats)
               ? this.capitalizeName(pokemon1.name)
               : this.capitalizeName(pokemon2.name),
           total_stats_difference:
-            this.calculateStatsTotal(pokemon1.stats) -
-            this.calculateStatsTotal(pokemon2.stats),
+            this.calculateStatsTotal(pokemon1.stats) - this.calculateStatsTotal(pokemon2.stats),
         },
       },
     };
@@ -108,7 +104,7 @@ export class JsonFormatter extends ResponseFormatter {
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: `# Pokemon Comparison Data\n\n\`\`\`json\n${JSON.stringify(comparisonData, null, 2)}\n\`\`\``,
         },
       ],
@@ -117,7 +113,7 @@ export class JsonFormatter extends ResponseFormatter {
 
   formatSearchResults(results: PokemonSearchResults): ToolResponse {
     if (results.results.length === 0) {
-      return this.formatError('No Pokemon found matching the criteria.');
+      return this.formatError("No Pokemon found matching the criteria.");
     }
 
     const searchData = {
@@ -136,7 +132,7 @@ export class JsonFormatter extends ResponseFormatter {
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: `# Pokemon Search Results\n\n\`\`\`json\n${JSON.stringify(searchData, null, 2)}\n\`\`\``,
         },
       ],
@@ -159,7 +155,7 @@ export class JsonFormatter extends ResponseFormatter {
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: `# ${this.capitalizeName(data.typeName)} Type Effectiveness Data\n\n\`\`\`json\n${JSON.stringify(effectivenessData, null, 2)}\n\`\`\``,
         },
       ],
@@ -186,20 +182,20 @@ export class JsonFormatter extends ResponseFormatter {
               };
               return acc;
             },
-            {} as Record<string, any>
+            {} as Record<string, any>,
           ),
           summary: {
             total: totalStats,
             average: Math.round(totalStats / pokemon.stats.length),
             highest: {
               stat: pokemon.stats.reduce((max, stat) =>
-                stat.base_stat > max.base_stat ? stat : max
+                stat.base_stat > max.base_stat ? stat : max,
               ).stat_name,
               value: Math.max(...statsArray),
             },
             lowest: {
               stat: pokemon.stats.reduce((min, stat) =>
-                stat.base_stat < min.base_stat ? stat : min
+                stat.base_stat < min.base_stat ? stat : min,
               ).stat_name,
               value: Math.min(...statsArray),
             },
@@ -211,7 +207,7 @@ export class JsonFormatter extends ResponseFormatter {
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: `# ${this.capitalizeName(pokemon.name)} Stats Data\n\n\`\`\`json\n${JSON.stringify(statsData, null, 2)}\n\`\`\``,
         },
       ],
@@ -220,14 +216,12 @@ export class JsonFormatter extends ResponseFormatter {
 
   formatStrongestPokemon(data: StrongestPokemonData): ToolResponse {
     if (data.results.length === 0) {
-      return this.formatError(
-        `No Pokemon found for criteria: ${data.criteria.criteria}`
-      );
+      return this.formatError(`No Pokemon found for criteria: ${data.criteria.criteria}`);
     }
 
     const strongestData = {
       strongest_pokemon: {
-        criteria: data.criteria.criteria.replace('_', ' ').toUpperCase(),
+        criteria: data.criteria.criteria.replace("_", " ").toUpperCase(),
         results: data.results.map((pokemon, index) => ({
           rank: index + 1,
           pokemon: {
@@ -243,8 +237,8 @@ export class JsonFormatter extends ResponseFormatter {
     return {
       content: [
         {
-          type: 'text',
-          text: `# Strongest Pokemon by ${data.criteria.criteria.replace('_', ' ').toUpperCase()}\n\n\`\`\`json\n${JSON.stringify(strongestData, null, 2)}\n\`\`\``,
+          type: "text",
+          text: `# Strongest Pokemon by ${data.criteria.criteria.replace("_", " ").toUpperCase()}\n\n\`\`\`json\n${JSON.stringify(strongestData, null, 2)}\n\`\`\``,
         },
       ],
     };
@@ -261,7 +255,7 @@ export class JsonFormatter extends ResponseFormatter {
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: `# Error\n\n\`\`\`json\n${JSON.stringify(errorData, null, 2)}\n\`\`\``,
         },
       ],
@@ -280,7 +274,7 @@ export class JsonFormatter extends ResponseFormatter {
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: `# Pokemon Not Found\n\n\`\`\`json\n${JSON.stringify(notFoundData, null, 2)}\n\`\`\``,
         },
       ],

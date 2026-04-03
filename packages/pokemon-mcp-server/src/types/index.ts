@@ -1,4 +1,4 @@
-import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 export interface Pokemon {
   id: number;
@@ -34,14 +34,7 @@ export interface SearchArgs {
 }
 
 export interface StrongestArgs {
-  criteria:
-    | 'total_stats'
-    | 'attack'
-    | 'defense'
-    | 'hp'
-    | 'speed'
-    | 'sp_attack'
-    | 'sp_defense';
+  criteria: "total_stats" | "attack" | "defense" | "hp" | "speed" | "sp_attack" | "sp_defense";
   type?: string;
   generation?: number;
   limit?: number;

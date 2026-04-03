@@ -1,6 +1,6 @@
-import { Database, type Statement } from 'bun:sqlite';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { Database, type Statement } from "bun:sqlite";
+import { promises as fs } from "fs";
+import path from "path";
 
 export interface DatabaseStats {
   pokemon: number;
@@ -14,10 +14,10 @@ export class PokemonDatabase {
 
   constructor() {
     // Ensure data directory exists
-    const dataDir = path.resolve(process.cwd(), '../../data');
+    const dataDir = path.resolve(process.cwd(), "../../data");
     fs.mkdir(dataDir, { recursive: true }).catch(console.error);
 
-    const dbPath = path.join(dataDir, 'pokemon.sqlite');
+    const dbPath = path.join(dataDir, "pokemon.sqlite");
     this.db = new Database(dbPath);
     this.setupSchema();
   }
@@ -104,7 +104,7 @@ export class PokemonDatabase {
       CREATE INDEX IF NOT EXISTS idx_pokemon_types_pokemon ON pokemon_types (pokemon_id);
     `);
 
-    console.log('✅ Database schema created');
+    console.log("✅ Database schema created");
   }
 
   // Prepared statements for efficient bulk operations
@@ -153,32 +153,18 @@ export class PokemonDatabase {
     }
 
     return {
-      pokemon: (
-        this.db
-          .prepare('SELECT COUNT(*) as count FROM pokemon')
-          .get() as CountResult
-      ).count,
-      types: (
-        this.db
-          .prepare('SELECT COUNT(*) as count FROM types')
-          .get() as CountResult
-      ).count,
-      abilities: (
-        this.db
-          .prepare('SELECT COUNT(*) as count FROM abilities')
-          .get() as CountResult
-      ).count,
-      moves: (
-        this.db
-          .prepare('SELECT COUNT(*) as count FROM moves')
-          .get() as CountResult
-      ).count,
+      pokemon: (this.db.prepare("SELECT COUNT(*) as count FROM pokemon").get() as CountResult)
+        .count,
+      types: (this.db.prepare("SELECT COUNT(*) as count FROM types").get() as CountResult).count,
+      abilities: (this.db.prepare("SELECT COUNT(*) as count FROM abilities").get() as CountResult)
+        .count,
+      moves: (this.db.prepare("SELECT COUNT(*) as count FROM moves").get() as CountResult).count,
     };
   }
 
   printStats(): void {
     const stats = this.getStats();
-    console.log('\n📊 Database Statistics:');
+    console.log("\n📊 Database Statistics:");
     console.log(`Total Pokemon: ${stats.pokemon}`);
     console.log(`Total Types: ${stats.types}`);
     console.log(`Total Abilities: ${stats.abilities}`);

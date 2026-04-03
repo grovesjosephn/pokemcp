@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
-import { Database } from 'bun:sqlite';
-import { SearchPokemonTool } from '../../src/tools/searchPokemon.js';
+import { describe, it, expect, beforeEach } from "bun:test";
+import { Database } from "bun:sqlite";
+import { SearchPokemonTool } from "../../src/tools/searchPokemon.js";
 
-describe('SearchPokemonTool', () => {
+describe("SearchPokemonTool", () => {
   let db: Database;
   let tool: SearchPokemonTool;
 
   beforeEach(() => {
     // Create an in-memory database for testing
-    db = new Database(':memory:');
+    db = new Database(":memory:");
 
     // Create necessary tables
     db.exec(`
@@ -89,45 +89,43 @@ describe('SearchPokemonTool', () => {
     tool = new SearchPokemonTool(db);
   });
 
-  it('should return all Pokemon when no filters are applied', async () => {
+  it("should return all Pokemon when no filters are applied", async () => {
     const result = await tool.execute({});
-    expect(result.content[0].text).toContain('Bulbasaur');
-    expect(result.content[0].text).toContain('Charmander');
-    expect(result.content[0].text).toContain('Squirtle');
+    expect(result.content[0].text).toContain("Bulbasaur");
+    expect(result.content[0].text).toContain("Charmander");
+    expect(result.content[0].text).toContain("Squirtle");
   });
 
-  it('should filter by type', async () => {
-    const result = await tool.execute({ type: 'fire' });
-    expect(result.content[0].text).toContain('Charmander');
-    expect(result.content[0].text).not.toContain('Bulbasaur');
-    expect(result.content[0].text).not.toContain('Squirtle');
+  it("should filter by type", async () => {
+    const result = await tool.execute({ type: "fire" });
+    expect(result.content[0].text).toContain("Charmander");
+    expect(result.content[0].text).not.toContain("Bulbasaur");
+    expect(result.content[0].text).not.toContain("Squirtle");
   });
 
-  it('should filter by generation', async () => {
+  it("should filter by generation", async () => {
     const result = await tool.execute({ generation: 1 });
-    expect(result.content[0].text).toContain('Bulbasaur');
-    expect(result.content[0].text).toContain('Charmander');
-    expect(result.content[0].text).toContain('Squirtle');
+    expect(result.content[0].text).toContain("Bulbasaur");
+    expect(result.content[0].text).toContain("Charmander");
+    expect(result.content[0].text).toContain("Squirtle");
   });
 
-  it('should filter by minimum stats', async () => {
+  it("should filter by minimum stats", async () => {
     const result = await tool.execute({ min_stat: 300 });
-    expect(result.content[0].text).toContain('Bulbasaur');
-    expect(result.content[0].text).toContain('Charmander');
-    expect(result.content[0].text).toContain('Squirtle');
+    expect(result.content[0].text).toContain("Bulbasaur");
+    expect(result.content[0].text).toContain("Charmander");
+    expect(result.content[0].text).toContain("Squirtle");
   });
 
-  it('should respect the limit parameter', async () => {
+  it("should respect the limit parameter", async () => {
     const result = await tool.execute({ limit: 2 });
-    const lines = result.content[0].text.split('\n');
-    const pokemonLines = lines.filter((line) => line.startsWith('**'));
+    const lines = result.content[0].text.split("\n");
+    const pokemonLines = lines.filter((line) => line.startsWith("**"));
     expect(pokemonLines.length).toBe(2);
   });
 
-  it('should return no results message when no matches found', async () => {
-    const result = await tool.execute({ type: 'dragon' });
-    expect(result.content[0].text).toBe(
-      '❌ **Error:** No Pokemon found matching the criteria.'
-    );
+  it("should return no results message when no matches found", async () => {
+    const result = await tool.execute({ type: "dragon" });
+    expect(result.content[0].text).toBe("❌ **Error:** No Pokemon found matching the criteria.");
   });
 });

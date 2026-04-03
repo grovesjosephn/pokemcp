@@ -1,17 +1,13 @@
-import { Database } from 'bun:sqlite';
-import { SearchArgs, ToolResponse } from '../types/index.js';
-import {
-  ResponseFormatter,
-  PokemonSearchResults,
-  MarkdownFormatter,
-} from '../formatters/index.js';
+import { Database } from "bun:sqlite";
+import { SearchArgs, ToolResponse } from "../types/index.js";
+import { ResponseFormatter, PokemonSearchResults, MarkdownFormatter } from "../formatters/index.js";
 
 export class SearchPokemonTool {
   private formatter: ResponseFormatter;
 
   constructor(
     private db: Database,
-    formatter?: ResponseFormatter
+    formatter?: ResponseFormatter,
   ) {
     this.formatter = formatter || new MarkdownFormatter();
   }
@@ -38,7 +34,7 @@ export class SearchPokemonTool {
     }
 
     if (args.generation) {
-      conditions.push('p.generation = ?');
+      conditions.push("p.generation = ?");
       params.push(args.generation);
     }
 
@@ -53,7 +49,7 @@ export class SearchPokemonTool {
     }
 
     if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
+      query += ` WHERE ${conditions.join(" AND ")}`;
     }
 
     query += ` GROUP BY p.id, p.name, p.generation
@@ -76,7 +72,7 @@ export class SearchPokemonTool {
         id: r.id,
         name: r.name,
         generation: r.generation,
-        types: r.types.split(',').map((type) => type.trim()),
+        types: r.types.split(",").map((type) => type.trim()),
       })),
     };
 

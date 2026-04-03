@@ -145,7 +145,7 @@ class MarkdownFormatter extends ResponseFormatter {
 - **Error Recovery:** Graceful degradation when data is incomplete
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 const PokemonSchema = z.object({
   id: z.number(),

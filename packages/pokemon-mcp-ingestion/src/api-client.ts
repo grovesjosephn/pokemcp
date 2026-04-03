@@ -1,5 +1,5 @@
-import { IngestionConfig } from './config.js';
-import { RateLimiter } from './rate-limiter.js';
+import { IngestionConfig } from "./config.js";
+import { RateLimiter } from "./rate-limiter.js";
 
 export interface PokemonListResponse {
   count: number;
@@ -59,7 +59,7 @@ export interface Pokemon {
 }
 
 export class PokeApiClient {
-  private baseUrl = 'https://pokeapi.co/api/v2';
+  private baseUrl = "https://pokeapi.co/api/v2";
   private config: IngestionConfig;
   private rateLimiter: RateLimiter;
 
@@ -74,7 +74,7 @@ export class PokeApiClient {
 
   async fetchWithRetry(url: string, retries?: number): Promise<any> {
     if (!url) {
-      throw new Error('URL is required');
+      throw new Error("URL is required");
     }
 
     const maxRetries = retries ?? this.config.maxRetries;
@@ -90,15 +90,12 @@ export class PokeApiClient {
     for (let i = 0; i < maxRetries; i++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(
-          () => controller.abort(),
-          this.config.timeoutMs
-        );
+        const timeoutId = setTimeout(() => controller.abort(), this.config.timeoutMs);
 
         const response = await fetch(url, {
           signal: controller.signal,
           headers: {
-            'User-Agent': 'Pokemon-MCP-Server/1.0.0',
+            "User-Agent": "Pokemon-MCP-Server/1.0.0",
           },
         });
 
@@ -111,8 +108,8 @@ export class PokeApiClient {
         const data = await response.json();
 
         // Basic content validation
-        if (!data || typeof data !== 'object') {
-          throw new Error('Invalid response: not a JSON object');
+        if (!data || typeof data !== "object") {
+          throw new Error("Invalid response: not a JSON object");
         }
 
         return data;

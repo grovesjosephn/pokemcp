@@ -1,6 +1,6 @@
-import { Database } from 'bun:sqlite';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { Database } from "bun:sqlite";
+import { promises as fs } from "fs";
+import path from "path";
 
 /**
  * Test Database Helper for Ingestion Package
@@ -11,14 +11,11 @@ export class TestDatabase {
   private db: Database;
   private dbPath: string;
 
-  constructor(testName: string = 'ingestion-test') {
+  constructor(testName: string = "ingestion-test") {
     // Create unique test database for each test suite with timestamp to avoid conflicts
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(7);
-    this.dbPath = path.join(
-      process.cwd(),
-      `${testName}-${timestamp}-${randomId}.sqlite`
-    );
+    this.dbPath = path.join(process.cwd(), `${testName}-${timestamp}-${randomId}.sqlite`);
     this.db = new Database(this.dbPath);
     this.setupProductionSchema();
   }
@@ -29,7 +26,7 @@ export class TestDatabase {
    */
   private setupProductionSchema(): void {
     // Enable foreign keys (important for data integrity in tests)
-    this.db.exec('PRAGMA foreign_keys = ON');
+    this.db.exec("PRAGMA foreign_keys = ON");
 
     // Create tables exactly as they exist in production
     this.db.exec(`
@@ -119,28 +116,26 @@ export class TestDatabase {
   insertTestData(): void {
     // Insert basic types that might be referenced during ingestion
     const types = [
-      { id: 1, name: 'grass' },
-      { id: 2, name: 'poison' },
-      { id: 3, name: 'electric' },
-      { id: 4, name: 'psychic' },
+      { id: 1, name: "grass" },
+      { id: 2, name: "poison" },
+      { id: 3, name: "electric" },
+      { id: 4, name: "psychic" },
     ];
 
-    const insertType = this.db.prepare(
-      'INSERT OR IGNORE INTO types (id, name) VALUES (?, ?)'
-    );
+    const insertType = this.db.prepare("INSERT OR IGNORE INTO types (id, name) VALUES (?, ?)");
     types.forEach((t) => insertType.run(t.id, t.name));
 
     // Insert basic abilities that might be referenced during ingestion
     const abilities = [
-      { id: 1, name: 'overgrow' },
-      { id: 2, name: 'static' },
-      { id: 3, name: 'pressure' },
-      { id: 4, name: 'chlorophyll' },
-      { id: 5, name: 'lightning-rod' },
+      { id: 1, name: "overgrow" },
+      { id: 2, name: "static" },
+      { id: 3, name: "pressure" },
+      { id: 4, name: "chlorophyll" },
+      { id: 5, name: "lightning-rod" },
     ];
 
     const insertAbility = this.db.prepare(
-      'INSERT OR IGNORE INTO abilities (id, name) VALUES (?, ?)'
+      "INSERT OR IGNORE INTO abilities (id, name) VALUES (?, ?)",
     );
     abilities.forEach((a) => insertAbility.run(a.id, a.name));
   }
@@ -169,7 +164,7 @@ export class TestDatabase {
    */
   clearData(): void {
     // Disable foreign keys temporarily for cascading deletes
-    this.db.exec('PRAGMA foreign_keys = OFF');
+    this.db.exec("PRAGMA foreign_keys = OFF");
 
     // Clear tables in dependency order
     this.db.exec(`
@@ -184,7 +179,7 @@ export class TestDatabase {
     `);
 
     // Re-enable foreign keys
-    this.db.exec('PRAGMA foreign_keys = ON');
+    this.db.exec("PRAGMA foreign_keys = ON");
   }
 }
 

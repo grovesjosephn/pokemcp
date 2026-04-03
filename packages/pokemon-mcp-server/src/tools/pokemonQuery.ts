@@ -1,5 +1,5 @@
-import { Database, type Statement } from 'bun:sqlite';
-import { PokemonData } from '../formatters/index.js';
+import { Database, type Statement } from "bun:sqlite";
+import { PokemonData } from "../formatters/index.js";
 
 export interface PokemonCompleteRow {
   id: number;
@@ -20,14 +20,7 @@ export interface PokemonCompleteRow {
   ability_slot: number | null;
 }
 
-const STAT_ORDER = [
-  'hp',
-  'attack',
-  'defense',
-  'special-attack',
-  'special-defense',
-  'speed',
-];
+const STAT_ORDER = ["hp", "attack", "defense", "special-attack", "special-defense", "speed"];
 
 const POKEMON_JOIN_SQL = `
   SELECT
@@ -49,17 +42,12 @@ export function preparePokemonQuery(db: Database): Statement {
   return db.prepare(POKEMON_JOIN_SQL);
 }
 
-export function rowsToPokemonData(
-  rows: PokemonCompleteRow[]
-): PokemonData | null {
+export function rowsToPokemonData(rows: PokemonCompleteRow[]): PokemonData | null {
   if (rows.length === 0) return null;
 
   const first = rows[0];
 
-  const statsMap = new Map<
-    string,
-    { stat_name: string; base_stat: number; effort: number }
-  >();
+  const statsMap = new Map<string, { stat_name: string; base_stat: number; effort: number }>();
   for (const row of rows) {
     if (row.stat_name && row.base_stat !== null && row.effort !== null) {
       if (!statsMap.has(row.stat_name)) {
@@ -81,11 +69,7 @@ export function rowsToPokemonData(
 
   const abilitiesMap = new Map<number, { name: string; is_hidden: boolean }>();
   for (const row of rows) {
-    if (
-      row.ability_name &&
-      row.is_hidden !== null &&
-      row.ability_slot !== null
-    ) {
+    if (row.ability_name && row.is_hidden !== null && row.ability_slot !== null) {
       abilitiesMap.set(row.ability_slot, {
         name: row.ability_name,
         is_hidden: row.is_hidden,
@@ -94,7 +78,7 @@ export function rowsToPokemonData(
   }
 
   const stats = STAT_ORDER.map((name) => statsMap.get(name)).filter(
-    (s): s is NonNullable<typeof s> => s !== undefined
+    (s): s is NonNullable<typeof s> => s !== undefined,
   );
 
   const types = Array.from(typesMap.entries())

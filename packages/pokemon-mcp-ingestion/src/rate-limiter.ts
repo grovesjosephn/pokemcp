@@ -31,9 +31,7 @@ export class RateLimiter {
     return {
       requestCount: this.requestCount,
       averageInterval:
-        this.requestCount > 1
-          ? (Date.now() - this.lastRequestTime) / this.requestCount
-          : 0,
+        this.requestCount > 1 ? (Date.now() - this.lastRequestTime) / this.requestCount : 0,
     };
   }
 

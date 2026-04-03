@@ -2,11 +2,18 @@
   "name": "pokemon-mcp-server",
   "version": "1.0.0",
   "description": "Pokemon MCP Server - Comprehensive Pokemon data through Model Context Protocol",
-  "main": "server.ts",
-  "type": "module",
+  "keywords": [
+    "ai-tools",
+    "mcp",
+    "model-context-protocol",
+    "pokemon",
+    "server"
+  ],
   "bin": {
     "pokemon-mcp-server": "./dist/server.js"
   },
+  "type": "module",
+  "main": "server.ts",
   "scripts": {
     "build": "tsc",
     "dev": "bun --watch server.ts",
@@ -17,8 +24,9 @@
     "test:watch": "bun test --watch",
     "test:run": "bun test",
     "clean": "rm -rf dist",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "oxlint .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
     "prepublishOnly": "bun run build",
     "prepack": "bun run build"
   },
@@ -32,13 +40,6 @@
     "bun-types": "latest",
     "typescript": "^5.4.2"
   },
-  "keywords": [
-    "mcp",
-    "pokemon",
-    "server",
-    "model-context-protocol",
-    "ai-tools"
-  ],
   "mcp": {
     "server": {
       "command": "bun",

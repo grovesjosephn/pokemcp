@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
-import { Database } from 'bun:sqlite';
-import { StrongestPokemonTool } from '../../src/tools/strongestPokemon.js';
+import { describe, it, expect, beforeEach } from "bun:test";
+import { Database } from "bun:sqlite";
+import { StrongestPokemonTool } from "../../src/tools/strongestPokemon.js";
 
-describe('StrongestPokemonTool', () => {
+describe("StrongestPokemonTool", () => {
   let db: Database;
   let tool: StrongestPokemonTool;
 
   beforeEach(() => {
     // Create an in-memory database for testing
-    db = new Database(':memory:');
+    db = new Database(":memory:");
 
     // Create necessary tables
     db.exec(`
@@ -89,55 +89,49 @@ describe('StrongestPokemonTool', () => {
     tool = new StrongestPokemonTool(db);
   });
 
-  it('should find Pokemon with highest total stats', async () => {
-    const result = await tool.execute({ criteria: 'total_stats' });
-    expect(result.content[0].text).toContain(
-      'Strongest Pokemon by total stats'
-    );
-    expect(result.content[0].text).toContain('Bulbasaur');
+  it("should find Pokemon with highest total stats", async () => {
+    const result = await tool.execute({ criteria: "total_stats" });
+    expect(result.content[0].text).toContain("Strongest Pokemon by total stats");
+    expect(result.content[0].text).toContain("Bulbasaur");
   });
 
-  it('should find Pokemon with highest attack', async () => {
-    const result = await tool.execute({ criteria: 'attack' });
-    expect(result.content[0].text).toContain('Strongest Pokemon by attack');
-    expect(result.content[0].text).toContain('Charmander');
+  it("should find Pokemon with highest attack", async () => {
+    const result = await tool.execute({ criteria: "attack" });
+    expect(result.content[0].text).toContain("Strongest Pokemon by attack");
+    expect(result.content[0].text).toContain("Charmander");
   });
 
-  it('should find Pokemon with highest defense', async () => {
-    const result = await tool.execute({ criteria: 'defense' });
-    expect(result.content[0].text).toContain('Strongest Pokemon by defense');
-    expect(result.content[0].text).toContain('Squirtle');
+  it("should find Pokemon with highest defense", async () => {
+    const result = await tool.execute({ criteria: "defense" });
+    expect(result.content[0].text).toContain("Strongest Pokemon by defense");
+    expect(result.content[0].text).toContain("Squirtle");
   });
 
-  it('should filter by type', async () => {
-    const result = await tool.execute({ criteria: 'attack', type: 'fire' });
-    expect(result.content[0].text).toContain('Charmander');
-    expect(result.content[0].text).not.toContain('Bulbasaur');
-    expect(result.content[0].text).not.toContain('Squirtle');
+  it("should filter by type", async () => {
+    const result = await tool.execute({ criteria: "attack", type: "fire" });
+    expect(result.content[0].text).toContain("Charmander");
+    expect(result.content[0].text).not.toContain("Bulbasaur");
+    expect(result.content[0].text).not.toContain("Squirtle");
   });
 
-  it('should filter by generation', async () => {
+  it("should filter by generation", async () => {
     const result = await tool.execute({
-      criteria: 'total_stats',
+      criteria: "total_stats",
       generation: 1,
     });
-    expect(result.content[0].text).toContain('Bulbasaur');
-    expect(result.content[0].text).toContain('Charmander');
-    expect(result.content[0].text).toContain('Squirtle');
+    expect(result.content[0].text).toContain("Bulbasaur");
+    expect(result.content[0].text).toContain("Charmander");
+    expect(result.content[0].text).toContain("Squirtle");
   });
 
-  it('should respect the limit parameter', async () => {
-    const result = await tool.execute({ criteria: 'total_stats', limit: 2 });
-    const lines = result.content[0].text.split('\n');
-    const pokemonLines = lines.filter(
-      (line) => line.startsWith('1.') || line.startsWith('2.')
-    );
+  it("should respect the limit parameter", async () => {
+    const result = await tool.execute({ criteria: "total_stats", limit: 2 });
+    const lines = result.content[0].text.split("\n");
+    const pokemonLines = lines.filter((line) => line.startsWith("1.") || line.startsWith("2."));
     expect(pokemonLines.length).toBe(2);
   });
 
-  it('should throw error for invalid criteria', async () => {
-    await expect(tool.execute({ criteria: 'invalid' as any })).rejects.toThrow(
-      'Invalid criteria'
-    );
+  it("should throw error for invalid criteria", async () => {
+    await expect(tool.execute({ criteria: "invalid" as any })).rejects.toThrow("Invalid criteria");
   });
 });

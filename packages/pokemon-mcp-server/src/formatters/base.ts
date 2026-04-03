@@ -1,4 +1,4 @@
-import { ToolResponse, SearchArgs, StrongestArgs } from '../types/index.js';
+import { ToolResponse, SearchArgs, StrongestArgs } from "../types/index.js";
 
 /**
  * Base interface for Pokemon data used by formatters
@@ -131,7 +131,7 @@ export abstract class ResponseFormatter {
   /**
    * Helper method to format stats total
    */
-  protected calculateStatsTotal(stats: PokemonData['stats']): number {
+  protected calculateStatsTotal(stats: PokemonData["stats"]): number {
     return stats.reduce((sum, stat) => sum + stat.base_stat, 0);
   }
 

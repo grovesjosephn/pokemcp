@@ -21,7 +21,7 @@ bun run dev           # Run all packages in development mode
 bun run test          # Run tests for all packages (single run)
 bun run test:watch    # Run tests in watch mode
 bun run test:run      # Run tests for all packages (single run)
-bun run format        # Format all files with prettier
+bun run format        # Format all files with oxfmt
 bun run format:check  # Check formatting without modifying files
 ```
 
@@ -60,15 +60,16 @@ bun run format:check  # Check package formatting
 - **MCP Tools**: `get_pokemon`, `search_pokemon`, `compare_pokemon`, `get_type_effectiveness`, `get_pokemon_stats`, `strongest_pokemon`
 - **Data Flow**: PokeAPI → Ingestion service → SQLite → MCP Server → Client
 - **TypeScript**: All packages use TypeScript; bun runs TS directly without a separate transpile step
-- **Testing**: Vitest for unit and integration testing
+- **Testing**: bun test (built-in test runner)
 - **MCP Inspector**: Visual and CLI testing tool for debugging MCP server
 
 The database is shared between packages at `../../data/pokemon.sqlite` relative to each package.
 
 ## Code Quality
 
-- **Prettier**: Automatic code formatting on commit via husky + lint-staged
-- **Pre-commit hooks**: Format code automatically before commits
+- **oxfmt**: Automatic code formatting on commit via husky pre-commit hook
+- **oxlint**: Linting on commit via husky pre-commit hook
+- **Pre-commit hooks**: Format and lint code automatically before commits
 - **TypeScript**: Strict typing across all packages with `bun-types` for bun built-ins
 - **Conventional Commits**: All commits should follow conventional commit format
 

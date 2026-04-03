@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Pokemon MCP Monorepo",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "workspaces": [
     "packages/*"
   ],
@@ -12,22 +15,14 @@
     "test": "bun run --filter '*' test:run",
     "test:watch": "bun run --filter '*' test",
     "test:run": "bun run --filter '*' test:run",
-    "lint": "bun run --filter '*' lint",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "oxlint .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
     "prepare": "husky"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "husky": "^9.0.0",
-    "lint-staged": "^15.0.0",
-    "prettier": "^3.0.0"
-  },
-  "lint-staged": {
-    "*.{ts,js,json,md}": [
-      "prettier --write"
-    ]
+    "oxfmt": "latest",
+    "oxlint": "latest"
   }
 }

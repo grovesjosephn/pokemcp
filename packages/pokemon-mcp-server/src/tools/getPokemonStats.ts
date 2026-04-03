@@ -1,11 +1,7 @@
-import { Database, type Statement } from 'bun:sqlite';
-import { ToolResponse } from '../types/index.js';
-import { ResponseFormatter, MarkdownFormatter } from '../formatters/index.js';
-import {
-  PokemonCompleteRow,
-  preparePokemonQuery,
-  rowsToPokemonData,
-} from './pokemonQuery.js';
+import { Database, type Statement } from "bun:sqlite";
+import { ToolResponse } from "../types/index.js";
+import { ResponseFormatter, MarkdownFormatter } from "../formatters/index.js";
+import { PokemonCompleteRow, preparePokemonQuery, rowsToPokemonData } from "./pokemonQuery.js";
 
 export class GetPokemonStatsTool {
   private preparedQuery: Statement;
@@ -13,17 +9,14 @@ export class GetPokemonStatsTool {
 
   constructor(
     private db: Database,
-    formatter?: ResponseFormatter
+    formatter?: ResponseFormatter,
   ) {
     this.formatter = formatter || new MarkdownFormatter();
     this.preparedQuery = preparePokemonQuery(this.db);
   }
 
   async execute(identifier: string): Promise<ToolResponse> {
-    const rows = this.preparedQuery.all(
-      identifier,
-      identifier
-    ) as PokemonCompleteRow[];
+    const rows = this.preparedQuery.all(identifier, identifier) as PokemonCompleteRow[];
 
     const pokemonData = rowsToPokemonData(rows);
     if (!pokemonData) {

@@ -1,17 +1,13 @@
-import { Database } from 'bun:sqlite';
-import { StrongestArgs, ToolResponse } from '../types/index.js';
-import {
-  ResponseFormatter,
-  StrongestPokemonData,
-  MarkdownFormatter,
-} from '../formatters/index.js';
+import { Database } from "bun:sqlite";
+import { StrongestArgs, ToolResponse } from "../types/index.js";
+import { ResponseFormatter, StrongestPokemonData, MarkdownFormatter } from "../formatters/index.js";
 
 export class StrongestPokemonTool {
   private formatter: ResponseFormatter;
 
   constructor(
     private db: Database,
-    formatter?: ResponseFormatter
+    formatter?: ResponseFormatter,
   ) {
     this.formatter = formatter || new MarkdownFormatter();
   }
@@ -21,19 +17,19 @@ export class StrongestPokemonTool {
 
     let statColumn: string;
     switch (criteria) {
-      case 'total_stats':
-        statColumn = 'SUM(s.base_stat)';
+      case "total_stats":
+        statColumn = "SUM(s.base_stat)";
         break;
-      case 'attack':
-      case 'defense':
-      case 'hp':
-      case 'speed':
-      case 'sp_attack':
-      case 'sp_defense':
-        statColumn = 's.base_stat';
+      case "attack":
+      case "defense":
+      case "hp":
+      case "speed":
+      case "sp_attack":
+      case "sp_defense":
+        statColumn = "s.base_stat";
         break;
       default:
-        throw new Error('Invalid criteria');
+        throw new Error("Invalid criteria");
     }
 
     let query = `
@@ -45,28 +41,28 @@ export class StrongestPokemonTool {
     const conditions: string[] = [];
     const params: (string | number)[] = [];
 
-    if (criteria !== 'total_stats') {
-      conditions.push('s.stat_name = ?');
-      params.push(criteria.replace('_', '-'));
+    if (criteria !== "total_stats") {
+      conditions.push("s.stat_name = ?");
+      params.push(criteria.replace("_", "-"));
     }
 
     if (type) {
       query += ` JOIN pokemon_types pt ON p.id = pt.pokemon_id
                  JOIN types t ON pt.type_id = t.id`;
-      conditions.push('LOWER(t.name) = LOWER(?)');
+      conditions.push("LOWER(t.name) = LOWER(?)");
       params.push(type);
     }
 
     if (generation) {
-      conditions.push('p.generation = ?');
+      conditions.push("p.generation = ?");
       params.push(generation);
     }
 
     if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
+      query += ` WHERE ${conditions.join(" AND ")}`;
     }
 
-    if (criteria === 'total_stats') {
+    if (criteria === "total_stats") {
       query += ` GROUP BY p.id, p.name, p.generation`;
     }
 

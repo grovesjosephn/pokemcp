@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
-import { Database } from 'bun:sqlite';
-import { GetTypeEffectivenessTool } from '../../src/tools/getTypeEffectiveness.js';
+import { describe, it, expect, beforeEach } from "bun:test";
+import { Database } from "bun:sqlite";
+import { GetTypeEffectivenessTool } from "../../src/tools/getTypeEffectiveness.js";
 
-describe('GetTypeEffectivenessTool', () => {
+describe("GetTypeEffectivenessTool", () => {
   let db: Database;
   let tool: GetTypeEffectivenessTool;
 
   beforeEach(() => {
     // Create an in-memory database for testing
-    db = new Database(':memory:');
+    db = new Database(":memory:");
 
     // Create necessary tables
     db.exec(`
@@ -60,33 +60,33 @@ describe('GetTypeEffectivenessTool', () => {
     tool = new GetTypeEffectivenessTool(db);
   });
 
-  it('should return type analysis for existing type', async () => {
-    const result = await tool.execute('fire');
-    expect(result.content[0].text).toContain('# Fire Type Analysis');
+  it("should return type analysis for existing type", async () => {
+    const result = await tool.execute("fire");
+    expect(result.content[0].text).toContain("# Fire Type Analysis");
   });
 
-  it('should handle case-insensitive type names', async () => {
-    const result = await tool.execute('FIRE');
-    expect(result.content[0].text).toContain('# Fire Type Analysis');
+  it("should handle case-insensitive type names", async () => {
+    const result = await tool.execute("FIRE");
+    expect(result.content[0].text).toContain("# Fire Type Analysis");
   });
 
-  it('should return error message for non-existent type', async () => {
-    const result = await tool.execute('dragon');
+  it("should return error message for non-existent type", async () => {
+    const result = await tool.execute("dragon");
     expect(result.content[0].text).toBe('Type "dragon" not found.');
   });
 
-  it('should include Pokemon list when includePokemon is true', async () => {
-    const result = await tool.execute('fire', true);
-    expect(result.content[0].text).toContain('## Pokemon with fire type');
-    expect(result.content[0].text).toContain('**Charmander** (#4)');
+  it("should include Pokemon list when includePokemon is true", async () => {
+    const result = await tool.execute("fire", true);
+    expect(result.content[0].text).toContain("## Pokemon with fire type");
+    expect(result.content[0].text).toContain("**Charmander** (#4)");
   });
 
-  it('should not include Pokemon list when includePokemon is false', async () => {
-    const result = await tool.execute('fire', false);
-    expect(result.content[0].text).not.toContain('## Pokemon with fire type');
+  it("should not include Pokemon list when includePokemon is false", async () => {
+    const result = await tool.execute("fire", false);
+    expect(result.content[0].text).not.toContain("## Pokemon with fire type");
   });
 
-  it('should limit Pokemon list to 20 entries', async () => {
+  it("should limit Pokemon list to 20 entries", async () => {
     // Insert 25 Pokemon of the same type
     const insertPokemon = db.prepare(`
       INSERT INTO pokemon (id, name, height, weight, base_experience, generation, species_url, sprite_url)
@@ -103,10 +103,10 @@ describe('GetTypeEffectivenessTool', () => {
       insertType.run(i);
     }
 
-    const result = await tool.execute('grass', true);
+    const result = await tool.execute("grass", true);
     const pokemonLines = result.content[0].text
-      .split('\n')
-      .filter((line) => line.startsWith('- **'));
+      .split("\n")
+      .filter((line) => line.startsWith("- **"));
     expect(pokemonLines.length).toBeLessThanOrEqual(20);
   });
 });

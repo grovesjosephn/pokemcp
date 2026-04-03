@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
-import { Database } from 'bun:sqlite';
-import { TestDatabase } from './tests/helpers/testDatabase.js';
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { Database } from "bun:sqlite";
+import { TestDatabase } from "./tests/helpers/testDatabase.js";
 
 // Import the server types and functions
 interface Pokemon {
@@ -21,13 +21,13 @@ interface Stat {
   effort: number;
 }
 
-describe('Pokemon MCP Server', () => {
+describe("Pokemon MCP Server", () => {
   let testDb: TestDatabase;
   let db: Database;
 
   beforeAll(async () => {
     // Create test database with production schema
-    testDb = new TestDatabase('server-test');
+    testDb = new TestDatabase("server-test");
     testDb.insertTestData();
     db = testDb.getDatabase();
   });
@@ -36,8 +36,8 @@ describe('Pokemon MCP Server', () => {
     await testDb.cleanup();
   });
 
-  describe('Database Queries', () => {
-    it('should get pokemon by id', () => {
+  describe("Database Queries", () => {
+    it("should get pokemon by id", () => {
       const query = `
         SELECT p.*, 
                (SELECT json_group_array(json_object('stat_name', stat_name, 'base_stat', base_stat, 'effort', effort)) 
@@ -53,21 +53,19 @@ describe('Pokemon MCP Server', () => {
       const result = db.prepare(query).get(1) as any;
 
       expect(result).toBeDefined();
-      expect(result.name).toBe('bulbasaur');
+      expect(result.name).toBe("bulbasaur");
       expect(result.id).toBe(1);
 
       const stats = JSON.parse(result.stats);
       expect(stats).toHaveLength(6);
-      expect(
-        stats.some((s: any) => s.stat_name === 'hp' && s.base_stat === 45)
-      ).toBe(true);
+      expect(stats.some((s: any) => s.stat_name === "hp" && s.base_stat === 45)).toBe(true);
 
       const types = JSON.parse(result.types);
-      expect(types).toContain('grass');
-      expect(types).toContain('poison');
+      expect(types).toContain("grass");
+      expect(types).toContain("poison");
     });
 
-    it('should search pokemon by type', () => {
+    it("should search pokemon by type", () => {
       const query = `
         SELECT DISTINCT p.* 
         FROM pokemon p
@@ -77,13 +75,13 @@ describe('Pokemon MCP Server', () => {
         LIMIT 10
       `;
 
-      const results = db.prepare(query).all('electric') as Pokemon[];
+      const results = db.prepare(query).all("electric") as Pokemon[];
 
       expect(results).toHaveLength(1);
-      expect(results[0].name).toBe('pikachu');
+      expect(results[0].name).toBe("pikachu");
     });
 
-    it('should find strongest pokemon by stat', () => {
+    it("should find strongest pokemon by stat", () => {
       const query = `
         SELECT p.*, s.base_stat
         FROM pokemon p
@@ -93,14 +91,14 @@ describe('Pokemon MCP Server', () => {
         LIMIT ?
       `;
 
-      const results = db.prepare(query).all('attack', 3) as any[];
+      const results = db.prepare(query).all("attack", 3) as any[];
 
       expect(results).toHaveLength(3);
-      expect(results[0].name).toBe('mewtwo');
+      expect(results[0].name).toBe("mewtwo");
       expect(results[0].base_stat).toBe(110);
     });
 
-    it('should search with generation filter', () => {
+    it("should search with generation filter", () => {
       const query = `
         SELECT DISTINCT p.* 
         FROM pokemon p
@@ -114,7 +112,7 @@ describe('Pokemon MCP Server', () => {
       expect(results.every((p) => p.generation === 1)).toBe(true);
     });
 
-    it('should search with minimum stat filter', () => {
+    it("should search with minimum stat filter", () => {
       const query = `
         SELECT DISTINCT p.* 
         FROM pokemon p
@@ -126,12 +124,12 @@ describe('Pokemon MCP Server', () => {
       const results = db.prepare(query).all(100) as Pokemon[];
 
       expect(results).toHaveLength(1); // mewtwo (DISTINCT pokemon with stats > 100)
-      expect(results.every((p) => p.name === 'mewtwo')).toBe(true);
+      expect(results.every((p) => p.name === "mewtwo")).toBe(true);
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle non-existent pokemon', () => {
+  describe("Error Handling", () => {
+    it("should handle non-existent pokemon", () => {
       const query = `
         SELECT p.*, 
                (SELECT json_group_array(json_object('stat_name', stat_name, 'base_stat', base_stat, 'effort', effort)) 
@@ -149,7 +147,7 @@ describe('Pokemon MCP Server', () => {
       expect(result).toBeNull();
     });
 
-    it('should handle empty search results', () => {
+    it("should handle empty search results", () => {
       const query = `
         SELECT DISTINCT p.* 
         FROM pokemon p
@@ -159,7 +157,7 @@ describe('Pokemon MCP Server', () => {
         LIMIT 10
       `;
 
-      const results = db.prepare(query).all('nonexistent-type');
+      const results = db.prepare(query).all("nonexistent-type");
 
       expect(results).toHaveLength(0);
     });

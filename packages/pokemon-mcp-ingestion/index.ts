@@ -1,15 +1,10 @@
 // Pokemon Data Ingestion App
 // Fetches data from PokeAPI and stores in SQLite for MCP server
 
-import {
-  loadConfig,
-  validateConfig,
-  printConfig,
-  IngestionConfig,
-} from './src/config.js';
-import { PokeApiClient } from './src/api-client.js';
-import { PokemonDatabase } from './src/database.js';
-import { DataProcessor } from './src/data-processor.js';
+import { loadConfig, validateConfig, printConfig, IngestionConfig } from "./src/config.js";
+import { PokeApiClient } from "./src/api-client.js";
+import { PokemonDatabase } from "./src/database.js";
+import { DataProcessor } from "./src/data-processor.js";
 
 export class PokemonIngestion {
   private config: IngestionConfig;
@@ -26,15 +21,11 @@ export class PokemonIngestion {
     // Step 2: Initialize components
     this.apiClient = new PokeApiClient(this.config);
     this.database = new PokemonDatabase();
-    this.processor = new DataProcessor(
-      this.apiClient,
-      this.database,
-      this.config
-    );
+    this.processor = new DataProcessor(this.apiClient, this.database, this.config);
   }
 
   async ingestAll(limit?: number): Promise<void> {
-    console.log('🚀 Starting Pokemon data ingestion...');
+    console.log("🚀 Starting Pokemon data ingestion...");
 
     try {
       // Step 3: Ingest Pokemon types first
@@ -46,13 +37,11 @@ export class PokemonIngestion {
 
       if (finalLimit !== requestedLimit) {
         console.log(
-          `⚠️  Requested ${requestedLimit} Pokemon, but limited to ${finalLimit} by configuration`
+          `⚠️  Requested ${requestedLimit} Pokemon, but limited to ${finalLimit} by configuration`,
         );
       }
 
-      console.log(
-        `📊 Ingesting ${finalLimit} Pokemon in batches of ${this.config.batchSize}`
-      );
+      console.log(`📊 Ingesting ${finalLimit} Pokemon in batches of ${this.config.batchSize}`);
 
       // Step 5: Fetch Pokemon list
       const pokemonList = await this.apiClient.fetchPokemonList(finalLimit);
@@ -61,20 +50,15 @@ export class PokemonIngestion {
       await this.processBatches(pokemonList.results);
 
       // Step 7: Display final statistics
-      console.log('✅ Pokemon data ingestion complete');
+      console.log("✅ Pokemon data ingestion complete");
       this.database.printStats();
     } catch (error) {
-      console.error(
-        '❌ Ingestion failed:',
-        error instanceof Error ? error.message : String(error)
-      );
+      console.error("❌ Ingestion failed:", error instanceof Error ? error.message : String(error));
       throw error;
     }
   }
 
-  private async processBatches(
-    pokemonList: Array<{ name: string; url: string }>
-  ): Promise<void> {
+  private async processBatches(pokemonList: Array<{ name: string; url: string }>): Promise<void> {
     const totalBatches = Math.ceil(pokemonList.length / this.config.batchSize);
     let processedCount = 0;
 
@@ -82,9 +66,7 @@ export class PokemonIngestion {
       const batchNum = Math.floor(i / this.config.batchSize) + 1;
       const batch = pokemonList.slice(i, i + this.config.batchSize);
 
-      console.log(
-        `🔄 Processing batch ${batchNum}/${totalBatches} (${batch.length} Pokemon)...`
-      );
+      console.log(`🔄 Processing batch ${batchNum}/${totalBatches} (${batch.length} Pokemon)...`);
 
       try {
         // Process current batch
@@ -96,22 +78,20 @@ export class PokemonIngestion {
         console.log(
           `✅ Batch ${batchNum}/${totalBatches}: ${count} Pokemon processed ` +
             `(Total: ${processedCount}/${pokemonList.length}, ` +
-            `API Requests: ${rateLimiterStats.requestCount})`
+            `API Requests: ${rateLimiterStats.requestCount})`,
         );
 
         // Wait between batches (except for the last one)
         if (i + this.config.batchSize < pokemonList.length) {
-          console.log(
-            `⏱️  Waiting ${this.config.batchDelayMs}ms before next batch...`
-          );
+          console.log(`⏱️  Waiting ${this.config.batchDelayMs}ms before next batch...`);
           await this.delay(this.config.batchDelayMs);
         }
       } catch (error) {
         console.error(
           `❌ Batch ${batchNum} failed:`,
-          error instanceof Error ? error.message : String(error)
+          error instanceof Error ? error.message : String(error),
         );
-        console.log('⏭️  Continuing with next batch...');
+        console.log("⏭️  Continuing with next batch...");
       }
     }
   }
@@ -131,8 +111,8 @@ async function main(): Promise<void> {
     await ingestion.ingestAll();
   } catch (error) {
     console.error(
-      '❌ Error during ingestion:',
-      error instanceof Error ? error.message : String(error)
+      "❌ Error during ingestion:",
+      error instanceof Error ? error.message : String(error),
     );
     process.exit(1);
   } finally {

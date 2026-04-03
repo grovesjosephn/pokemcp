@@ -5,29 +5,29 @@
  * separating presentation logic from business logic.
  */
 
-export { ResponseFormatter } from './base.js';
+export { ResponseFormatter } from "./base.js";
 export type {
   PokemonData,
   PokemonComparisonData,
   PokemonSearchResults,
   TypeEffectivenessData,
   StrongestPokemonData,
-} from './base.js';
-export { MarkdownFormatter } from './markdown.js';
-export { JsonFormatter } from './json.js';
+} from "./base.js";
+export { MarkdownFormatter } from "./markdown.js";
+export { JsonFormatter } from "./json.js";
 
 // Import the classes for use in factory function
-import { MarkdownFormatter } from './markdown.js';
-import { JsonFormatter } from './json.js';
+import { MarkdownFormatter } from "./markdown.js";
+import { JsonFormatter } from "./json.js";
 
 /**
  * Factory function to create formatters based on format type
  */
-export function createFormatter(format: 'markdown' | 'json') {
+export function createFormatter(format: "markdown" | "json") {
   switch (format) {
-    case 'markdown':
+    case "markdown":
       return new MarkdownFormatter();
-    case 'json':
+    case "json":
       return new JsonFormatter();
     default:
       return new MarkdownFormatter(); // Default to markdown
@@ -37,4 +37,4 @@ export function createFormatter(format: 'markdown' | 'json') {
 /**
  * Available formatter types
  */
-export type FormatterType = 'markdown' | 'json';
+export type FormatterType = "markdown" | "json";

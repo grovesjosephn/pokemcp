@@ -1,17 +1,17 @@
-import { Database } from 'bun:sqlite';
-import { ToolResponse } from '../types/index.js';
+import { Database } from "bun:sqlite";
+import { ToolResponse } from "../types/index.js";
 import {
   ResponseFormatter,
   TypeEffectivenessData,
   MarkdownFormatter,
-} from '../formatters/index.js';
+} from "../formatters/index.js";
 
 export class GetTypeEffectivenessTool {
   private formatter: ResponseFormatter;
 
   constructor(
     private db: Database,
-    formatter?: ResponseFormatter
+    formatter?: ResponseFormatter,
   ) {
     this.formatter = formatter || new MarkdownFormatter();
   }
@@ -19,17 +19,16 @@ export class GetTypeEffectivenessTool {
   async execute(type: string, includePokemon = false): Promise<ToolResponse> {
     // Check if type exists
     const typeExists = this.db
-      .prepare('SELECT id FROM types WHERE LOWER(name) = LOWER(?)')
+      .prepare("SELECT id FROM types WHERE LOWER(name) = LOWER(?)")
       .get(type);
 
     if (!typeExists) {
       return {
-        content: [{ type: 'text', text: `Type "${type}" not found.` }],
+        content: [{ type: "text", text: `Type "${type}" not found.` }],
       };
     }
 
-    let pokemonList: Array<{ id: number; name: string; generation: number }> =
-      [];
+    let pokemonList: Array<{ id: number; name: string; generation: number }> = [];
 
     if (includePokemon) {
       pokemonList = this.db
@@ -42,7 +41,7 @@ export class GetTypeEffectivenessTool {
         WHERE LOWER(t.name) = LOWER(?)
         ORDER BY p.id
         LIMIT 20
-      `
+      `,
         )
         .all(type) as Array<{ name: string; id: number; generation: number }>;
     }
