@@ -9,25 +9,21 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch index.ts",
-    "start": "tsx index.ts",
-    "ingest": "tsx index.ts",
-    "test": "vitest --run",
-    "test:watch": "vitest",
-    "test:run": "vitest --run",
+    "dev": "bun --watch index.ts",
+    "start": "bun index.ts",
+    "ingest": "bun index.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:run": "bun test",
     "clean": "rm -rf dist",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
-  "dependencies": {
-    "better-sqlite3": "catalog:"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@types/better-sqlite3": "catalog:",
-    "@types/node": "catalog:",
-    "tsx": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "@types/node": "^20.11.30",
+    "bun-types": "latest",
+    "typescript": "^5.4.2"
   },
   "keywords": [
     "pokemon",

@@ -6,16 +6,16 @@ echo "🚀 Setting up Pokemon MCP development environment..."
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-pnpm install
+bun install
 
 # Build packages
 echo "🔨 Building packages..."
-pnpm build
+bun run build
 
 # Run ingestion to populate database
 echo "📊 Populating Pokemon database..."
 cd packages/pokemon-mcp-ingestion
-pnpm start
+bun run start
 cd ../..
 
 # Install server globally for Claude Desktop integration
@@ -39,5 +39,5 @@ echo '       }'
 echo '     }'
 echo '   }'
 echo ""
-echo "2. For development: pnpm dev"
-echo "3. To test server: cd packages/pokemon-mcp-server && pnpm inspect"
+echo "2. For development: bun run dev"
+echo "3. To test server: cd packages/pokemon-mcp-server && bun run inspect"

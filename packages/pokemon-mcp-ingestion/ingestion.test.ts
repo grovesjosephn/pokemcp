@@ -5,18 +5,9 @@ import {
   beforeAll,
   afterAll,
   beforeEach,
-  vi,
-} from 'vitest';
-import Database from 'better-sqlite3';
+} from 'bun:test';
+import { Database } from 'bun:sqlite';
 import { TestDatabase } from './tests/helpers/testDatabase.js';
-
-// Mock node-fetch
-vi.mock('node-fetch', () => ({
-  default: vi.fn(),
-}));
-
-import fetch from 'node-fetch';
-const mockFetch = vi.mocked(fetch);
 
 // Import ingestion types
 interface Pokemon {
@@ -51,7 +42,7 @@ interface Pokemon {
 
 describe('Pokemon Data Ingestion', () => {
   let testDb: TestDatabase;
-  let db: Database.Database;
+  let db: Database;
 
   beforeAll(async () => {
     // Create test database with production schema
@@ -72,9 +63,6 @@ describe('Pokemon Data Ingestion', () => {
 
     // Re-insert basic reference data needed for ingestion
     testDb.insertTestData();
-
-    // Reset all mocks
-    vi.clearAllMocks();
   });
 
   describe('Database Schema', () => {

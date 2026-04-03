@@ -1,4 +1,4 @@
-import { ToolResponse } from '../types/index.js';
+import { ToolResponse, SearchArgs, StrongestArgs } from '../types/index.js';
 
 /**
  * Base interface for Pokemon data used by formatters
@@ -40,7 +40,7 @@ export interface PokemonComparisonData {
  * Interface for Pokemon search results
  */
 export interface PokemonSearchResults {
-  criteria: any;
+  criteria: SearchArgs;
   totalCount: number;
   results: Array<{
     id: number;
@@ -67,7 +67,7 @@ export interface TypeEffectivenessData {
  * Interface for strongest Pokemon data
  */
 export interface StrongestPokemonData {
-  criteria: any;
+  criteria: StrongestArgs;
   results: Array<{
     id: number;
     name: string;

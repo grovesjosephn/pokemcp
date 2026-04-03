@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { describe, it, expect, beforeEach } from 'bun:test';
+import { Database } from 'bun:sqlite';
 import { SearchPokemonTool } from '../../src/tools/searchPokemon.js';
 
 describe('SearchPokemonTool', () => {
-  let db: Database.Database;
+  let db: Database;
   let tool: SearchPokemonTool;
 
   beforeEach(() => {

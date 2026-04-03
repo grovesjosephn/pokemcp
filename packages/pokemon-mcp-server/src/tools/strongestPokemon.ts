@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Database } from 'bun:sqlite';
 import { StrongestArgs, ToolResponse } from '../types/index.js';
 import {
   ResponseFormatter,
@@ -10,7 +10,7 @@ export class StrongestPokemonTool {
   private formatter: ResponseFormatter;
 
   constructor(
-    private db: Database.Database,
+    private db: Database,
     formatter?: ResponseFormatter
   ) {
     this.formatter = formatter || new MarkdownFormatter();

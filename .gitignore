@@ -1,14 +1,10 @@
 # Dependencies
 node_modules/
-.pnpm-store/
-.pnpm-debug.log*
+.bun-store/
 
 # Build outputs
 dist/
 build/
-*.tsbuildinfo
-
-# TypeScript
 *.tsbuildinfo
 *.tsbuildinfo.json
 
@@ -36,7 +32,6 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 
 # OS generated files
 .DS_Store
@@ -46,12 +41,6 @@ pnpm-debug.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Project specific
-.pnpm-catalog/
-.pnpm-catalog-cache/
-.pnpm-catalog-backup/
-.pnpm-catalog-backup-cleanup.log
 
 # SQLite database files
 *.sqlite
@@ -67,8 +56,8 @@ coverage/
 *.swo
 *~
 
-# New rules from the code block
+# Data files
 data/*.sqlite
 data/*.sqlite-journal
 data/*.db
-data/*.db-journal 
+data/*.db-journal

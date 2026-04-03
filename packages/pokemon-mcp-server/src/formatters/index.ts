@@ -5,8 +5,8 @@
  * separating presentation logic from business logic.
  */
 
-export {
-  ResponseFormatter,
+export { ResponseFormatter } from './base.js';
+export type {
   PokemonData,
   PokemonComparisonData,
   PokemonSearchResults,

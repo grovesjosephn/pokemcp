@@ -49,7 +49,7 @@ cd pokemcp
 2. Install dependencies:
 
 ```bash
-pnpm install
+bun install
 ```
 
 3. Set up the database:
@@ -61,7 +61,7 @@ pnpm install
 4. Build all packages:
 
 ```bash
-pnpm build
+bun run build
 ```
 
 ### Usage
@@ -70,11 +70,11 @@ pnpm build
 
 ```bash
 # Development mode (with hot reload)
-pnpm dev
+bun run dev
 
 # Production mode
 cd packages/pokemon-mcp-server
-pnpm start
+bun run start
 ```
 
 #### Testing with MCP Inspector
@@ -82,10 +82,10 @@ pnpm start
 ```bash
 # Visual GUI testing
 cd packages/pokemon-mcp-server
-pnpm inspect
+bun run inspect
 
 # CLI testing
-pnpm inspect:cli
+bun run inspect:cli
 ```
 
 #### Data Ingestion
@@ -93,7 +93,7 @@ pnpm inspect:cli
 ```bash
 # Run data ingestion
 cd packages/pokemon-mcp-ingestion
-pnpm start
+bun run start
 ```
 
 ## Claude Desktop Integration
@@ -104,7 +104,7 @@ Install the server globally:
 
 ```bash
 cd packages/pokemon-mcp-server
-pnpm build
+bun run build
 npm link
 ```
 
@@ -145,9 +145,8 @@ Configure Claude Desktop:
 {
   "mcpServers": {
     "pokemon": {
-      "command": "pnpm",
-      "args": ["--filter", "pokemon-mcp-server", "start"],
-      "cwd": "/path/to/pokemcp",
+      "command": "bun",
+      "args": ["/path/to/pokemcp/packages/pokemon-mcp-server/server.ts"],
       "env": {
         "POKEMON_DATA_DIR": "/path/to/pokemcp/data"
       }
@@ -161,12 +160,11 @@ Configure Claude Desktop:
 ### Workspace Commands
 
 ```bash
-pnpm build         # Build all packages
-pnpm dev           # Run all packages in development mode
-pnpm test          # Run tests for all packages
-pnpm lint          # Lint all packages
-pnpm format        # Format all files
-pnpm format:check  # Check formatting
+bun run build         # Build all packages
+bun run dev           # Run all packages in development mode
+bun run test          # Run tests for all packages
+bun run format        # Format all files
+bun run format:check  # Check formatting
 ```
 
 ### Server Package Commands
@@ -174,12 +172,12 @@ pnpm format:check  # Check formatting
 ```bash
 cd packages/pokemon-mcp-server
 
-pnpm build         # Compile TypeScript
-pnpm dev           # Watch mode with tsx
-pnpm start         # Run server
-pnpm inspect       # Run MCP Inspector GUI
-pnpm inspect:cli   # Run MCP Inspector CLI
-pnpm test          # Run tests
+bun run build         # Compile TypeScript
+bun run dev           # Watch mode
+bun run start         # Run server
+bun run inspect       # Run MCP Inspector GUI
+bun run inspect:cli   # Run MCP Inspector CLI
+bun test              # Run tests
 ```
 
 ### Ingestion Package Commands
@@ -187,23 +185,23 @@ pnpm test          # Run tests
 ```bash
 cd packages/pokemon-mcp-ingestion
 
-pnpm build         # Compile TypeScript
-pnpm dev           # Watch mode
-pnpm start         # Run ingestion
-pnpm test          # Run tests
+bun run build         # Compile TypeScript
+bun run dev           # Watch mode
+bun run start         # Run ingestion
+bun test              # Run tests
 ```
 
 ## Testing
 
-The project uses Vitest for testing:
+The project uses bun's built-in test runner:
 
 ```bash
 # Run all tests
-pnpm test
+bun run test
 
 # Run specific package tests
-pnpm --filter pokemon-mcp-server test
-pnpm --filter pokemon-mcp-ingestion test
+cd packages/pokemon-mcp-server && bun test
+cd packages/pokemon-mcp-ingestion && bun test
 ```
 
 ## Database Schema
@@ -214,7 +212,6 @@ The SQLite database includes tables for:
 - `stats` - Pokemon stats (HP, Attack, Defense, etc.)
 - `types` - Pokemon types and relationships
 - `abilities` - Pokemon abilities
-- `type_effectiveness` - Type effectiveness relationships
 
 ## Contributing
 
@@ -222,7 +219,7 @@ The SQLite database includes tables for:
 2. Create a feature branch
 3. Make your changes
 4. Add tests
-5. Run `pnpm format` and `pnpm lint`
+5. Run `bun run format`
 6. Submit a pull request
 
 ### Commit Guidelines

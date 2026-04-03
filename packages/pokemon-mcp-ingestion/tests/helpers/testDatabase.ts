@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Database } from 'bun:sqlite';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -8,7 +8,7 @@ import path from 'path';
  * This ensures tests use consistent schema and catch real-world issues.
  */
 export class TestDatabase {
-  private db: Database.Database;
+  private db: Database;
   private dbPath: string;
 
   constructor(testName: string = 'ingestion-test') {
@@ -29,7 +29,7 @@ export class TestDatabase {
    */
   private setupProductionSchema(): void {
     // Enable foreign keys (important for data integrity in tests)
-    this.db.pragma('foreign_keys = ON');
+    this.db.exec('PRAGMA foreign_keys = ON');
 
     // Create tables exactly as they exist in production
     this.db.exec(`
@@ -148,7 +148,7 @@ export class TestDatabase {
   /**
    * Get the database instance for direct queries in tests
    */
-  getDatabase(): Database.Database {
+  getDatabase(): Database {
     return this.db;
   }
 
@@ -169,7 +169,7 @@ export class TestDatabase {
    */
   clearData(): void {
     // Disable foreign keys temporarily for cascading deletes
-    this.db.pragma('foreign_keys = OFF');
+    this.db.exec('PRAGMA foreign_keys = OFF');
 
     // Clear tables in dependency order
     this.db.exec(`
@@ -184,7 +184,7 @@ export class TestDatabase {
     `);
 
     // Re-enable foreign keys
-    this.db.pragma('foreign_keys = ON');
+    this.db.exec('PRAGMA foreign_keys = ON');
   }
 }
 

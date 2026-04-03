@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "description": "Pokemon MCP Monorepo",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "pnpm -r build",
-    "dev": "pnpm -r dev",
-    "test": "pnpm -r test:run",
-    "test:watch": "pnpm -r test",
-    "test:run": "pnpm -r test:run",
-    "lint": "pnpm -r lint",
+    "build": "bun run --filter '*' build",
+    "dev": "bun run --filter '*' dev",
+    "test": "bun run --filter '*' test:run",
+    "test:watch": "bun run --filter '*' test",
+    "test:run": "bun run --filter '*' test:run",
+    "lint": "bun run --filter '*' lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
@@ -17,12 +20,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.8.0",
   "devDependencies": {
-    "prettier": "^3.0.0",
-    "husky": "^8.0.0",
+    "husky": "^9.0.0",
     "lint-staged": "^15.0.0",
-    "vitest": "catalog:"
+    "prettier": "^3.0.0"
   },
   "lint-staged": {
     "*.{ts,js,json,md}": [

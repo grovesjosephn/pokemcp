@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import Database from 'better-sqlite3';
+import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
+import { Database } from 'bun:sqlite';
 import { ComparePokemonTool } from '../../src/tools/comparePokemon.js';
 import { TestDatabase } from '../helpers/testDatabase.js';
 
 describe('ComparePokemonTool', () => {
   let testDb: TestDatabase;
-  let db: Database.Database;
+  let db: Database;
   let tool: ComparePokemonTool;
 
   beforeAll(async () => {

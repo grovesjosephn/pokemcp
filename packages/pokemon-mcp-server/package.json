@@ -9,31 +9,28 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch server.ts",
-    "start": "tsx server.ts",
-    "inspect": "npx @modelcontextprotocol/inspector tsx server.ts",
-    "inspect:cli": "npx @modelcontextprotocol/inspector --cli tsx server.ts",
-    "test": "vitest --run",
-    "test:watch": "vitest",
-    "test:run": "vitest --run",
+    "dev": "bun --watch server.ts",
+    "start": "bun server.ts",
+    "inspect": "bunx @modelcontextprotocol/inspector bun server.ts",
+    "inspect:cli": "bunx @modelcontextprotocol/inspector --cli bun server.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:run": "bun test",
     "clean": "rm -rf dist",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepublishOnly": "pnpm build",
-    "prepack": "pnpm build"
+    "prepublishOnly": "bun run build",
+    "prepack": "bun run build"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "catalog:",
-    "better-sqlite3": "catalog:"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.0"
   },
   "devDependencies": {
-    "@modelcontextprotocol/inspector": "catalog:",
-    "@types/better-sqlite3": "catalog:",
-    "@types/node": "catalog:",
-    "@vitest/ui": "3.2.4",
-    "tsx": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "@modelcontextprotocol/inspector": "^0.21.1",
+    "@types/node": "^20.11.30",
+    "bun-types": "latest",
+    "typescript": "^5.4.2"
   },
   "keywords": [
     "mcp",
@@ -44,7 +41,7 @@
   ],
   "mcp": {
     "server": {
-      "command": "tsx",
+      "command": "bun",
       "args": [
         "server.ts"
       ],

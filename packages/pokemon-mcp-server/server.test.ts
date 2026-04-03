@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import Database from 'better-sqlite3';
+import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
+import { Database } from 'bun:sqlite';
 import { TestDatabase } from './tests/helpers/testDatabase.js';
 
 // Import the server types and functions
@@ -23,7 +23,7 @@ interface Stat {
 
 describe('Pokemon MCP Server', () => {
   let testDb: TestDatabase;
-  let db: Database.Database;
+  let db: Database;
 
   beforeAll(async () => {
     // Create test database with production schema
@@ -146,7 +146,7 @@ describe('Pokemon MCP Server', () => {
 
       const result = db.prepare(query).get(999);
 
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
     });
 
     it('should handle empty search results', () => {

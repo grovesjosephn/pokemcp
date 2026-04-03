@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Database, type Statement } from 'bun:sqlite';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -10,7 +10,7 @@ export interface DatabaseStats {
 }
 
 export class PokemonDatabase {
-  private db: Database.Database;
+  private db: Database;
 
   constructor() {
     // Ensure data directory exists
@@ -108,7 +108,7 @@ export class PokemonDatabase {
   }
 
   // Prepared statements for efficient bulk operations
-  getPreparedStatements(): Record<string, Database.Statement> {
+  getPreparedStatements(): Record<string, Statement> {
     return {
       insertPokemon: this.db.prepare(`
         INSERT OR REPLACE INTO pokemon 
@@ -143,7 +143,7 @@ export class PokemonDatabase {
     };
   }
 
-  createTransaction(fn: () => void): Database.Transaction {
+  createTransaction(fn: () => void) {
     return this.db.transaction(fn);
   }
 

@@ -160,7 +160,7 @@ export class JsonFormatter extends ResponseFormatter {
       content: [
         {
           type: 'text',
-          text: `# ${this.capitalizeName(data.type)} Type Effectiveness Data\n\n\`\`\`json\n${JSON.stringify(effectivenessData, null, 2)}\n\`\`\``,
+          text: `# ${this.capitalizeName(data.typeName)} Type Effectiveness Data\n\n\`\`\`json\n${JSON.stringify(effectivenessData, null, 2)}\n\`\`\``,
         },
       ],
     };

@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Database } from 'bun:sqlite';
 import { ToolResponse } from '../types/index.js';
 import {
   ResponseFormatter,
@@ -10,7 +10,7 @@ export class GetTypeEffectivenessTool {
   private formatter: ResponseFormatter;
 
   constructor(
-    private db: Database.Database,
+    private db: Database,
     formatter?: ResponseFormatter
   ) {
     this.formatter = formatter || new MarkdownFormatter();
@@ -24,12 +24,7 @@ export class GetTypeEffectivenessTool {
 
     if (!typeExists) {
       return {
-        content: [
-          {
-            type: 'text',
-            text: `Type "${type}" not found.`,
-          },
-        ],
+        content: [{ type: 'text', text: `Type "${type}" not found.` }],
       };
     }
 

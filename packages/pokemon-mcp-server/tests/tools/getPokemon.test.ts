@@ -1,11 +1,19 @@
-import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
-import Database from 'better-sqlite3';
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+  spyOn,
+} from 'bun:test';
+import { Database } from 'bun:sqlite';
 import { GetPokemonTool } from '../../src/tools/getPokemon.js';
 import { TestDatabase } from '../helpers/testDatabase.js';
 
 describe('GetPokemonTool', () => {
   let testDb: TestDatabase;
-  let db: Database.Database;
+  let db: Database;
   let tool: GetPokemonTool;
 
   beforeAll(async () => {
@@ -89,7 +97,7 @@ describe('GetPokemonTool', () => {
   describe('Performance and Database optimization', () => {
     it('should execute with optimized single query approach', async () => {
       // Create a fresh tool instance to spy on the constructor behavior
-      const prepareSpy = vi.spyOn(db, 'prepare');
+      const prepareSpy = spyOn(db, 'prepare');
       const optimizedTool = new GetPokemonTool(db);
 
       // Should prepare exactly one statement in constructor (our optimized query)

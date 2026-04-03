@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-This is a PNPM monorepo for a Pokemon MCP (Model Context Protocol) system with two main packages:
+This is a Bun monorepo for a Pokemon MCP (Model Context Protocol) system with two main packages:
 
 - **pokemon-mcp-server**: MCP server that provides Pokemon data through standardized tools
 - **pokemon-mcp-ingestion**: Data ingestion service that fetches from PokeAPI and stores in SQLite
@@ -16,51 +16,50 @@ The system uses a shared SQLite database (`data/pokemon.sqlite`) for Pokemon dat
 ### Workspace Commands (run from root)
 
 ```bash
-pnpm build         # Build all packages
-pnpm dev           # Run all packages in development mode
-pnpm test          # Run tests for all packages (single run)
-pnpm test:watch    # Run tests in watch mode
-pnpm test:run      # Run tests for all packages (single run)
-pnpm lint          # Lint all packages
-pnpm format        # Format all files with prettier
-pnpm format:check  # Check formatting without modifying files
+bun run build         # Build all packages
+bun run dev           # Run all packages in development mode
+bun run test          # Run tests for all packages (single run)
+bun run test:watch    # Run tests in watch mode
+bun run test:run      # Run tests for all packages (single run)
+bun run format        # Format all files with prettier
+bun run format:check  # Check formatting without modifying files
 ```
 
 ### Server Package Commands (packages/pokemon-mcp-server/)
 
 ```bash
-pnpm build         # Compile TypeScript
-pnpm dev           # Watch mode with tsx
-pnpm start         # Run server directly
-pnpm inspect       # Run MCP Inspector GUI for testing
-pnpm inspect:cli   # Run MCP Inspector CLI for testing
-pnpm test          # Run server tests (single run)
-pnpm test:watch    # Run server tests in watch mode
-pnpm test:run      # Run server tests (single run)
-pnpm format        # Format package files
-pnpm format:check  # Check package formatting
+bun run build         # Compile TypeScript
+bun run dev           # Watch mode with bun --watch
+bun run start         # Run server directly
+bun run inspect       # Run MCP Inspector GUI for testing
+bun run inspect:cli   # Run MCP Inspector CLI for testing
+bun run test          # Run server tests (single run)
+bun run test:watch    # Run server tests in watch mode
+bun run test:run      # Run server tests (single run)
+bun run format        # Format package files
+bun run format:check  # Check package formatting
 ```
 
 ### Ingestion Package Commands (packages/pokemon-mcp-ingestion/)
 
 ```bash
-pnpm build         # Compile TypeScript
-pnpm dev           # Watch mode with tsx
-pnpm start         # Run ingestion
-pnpm ingest        # Run ingestion (alias)
-pnpm test          # Run ingestion tests (single run)
-pnpm test:watch    # Run ingestion tests in watch mode
-pnpm test:run      # Run ingestion tests (single run)
-pnpm format        # Format package files
-pnpm format:check  # Check package formatting
+bun run build         # Compile TypeScript
+bun run dev           # Watch mode with bun --watch
+bun run start         # Run ingestion
+bun run ingest        # Run ingestion (alias)
+bun run test          # Run ingestion tests (single run)
+bun run test:watch    # Run ingestion tests in watch mode
+bun run test:run      # Run ingestion tests (single run)
+bun run format        # Format package files
+bun run format:check  # Check package formatting
 ```
 
 ## Key Components
 
-- **Database Schema**: SQLite with tables for pokemon, stats, types, abilities
-- **MCP Tools**: `get_pokemon`, `search_pokemon`, `get_strongest_pokemon`
+- **Database Schema**: SQLite with tables for pokemon, stats, types, abilities (via `bun:sqlite`)
+- **MCP Tools**: `get_pokemon`, `search_pokemon`, `compare_pokemon`, `get_type_effectiveness`, `get_pokemon_stats`, `strongest_pokemon`
 - **Data Flow**: PokeAPI → Ingestion service → SQLite → MCP Server → Client
-- **TypeScript**: All packages use TypeScript with tsx for development
+- **TypeScript**: All packages use TypeScript; bun runs TS directly without a separate transpile step
 - **Testing**: Vitest for unit and integration testing
 - **MCP Inspector**: Visual and CLI testing tool for debugging MCP server
 
@@ -70,8 +69,7 @@ The database is shared between packages at `../../data/pokemon.sqlite` relative 
 
 - **Prettier**: Automatic code formatting on commit via husky + lint-staged
 - **Pre-commit hooks**: Format code automatically before commits
-- **TypeScript**: Strict typing across all packages
-- **PNPM Catalog**: Centralized dependency version management in `pnpm-workspace.yaml`
+- **TypeScript**: Strict typing across all packages with `bun-types` for bun built-ins
 - **Conventional Commits**: All commits should follow conventional commit format
 
 ## Commit Guidelines
@@ -104,37 +102,18 @@ Examples:
 
 ## Dependency Management
 
-Dependencies are managed via PNPM catalog for version consistency:
-
-- Common dependencies defined once in `pnpm-workspace.yaml` catalog
-- Packages reference catalog versions with `"catalog:"` syntax
-- Updates dependency versions in one place, applies across all packages
-- Prevents version conflicts between packages
+Dependencies are managed directly in each package's `package.json`. Workspaces are configured in the root `package.json` via the `workspaces` field.
 
 ## Claude Desktop Integration
 
-### Option 1: NPM Package (Recommended)
-
-First, build and install the server globally:
-
-```bash
-# Ensure dependencies are installed and database is populated
-pnpm install
-./scripts/setup-local-dev.sh
-
-# Build and install the server package
-cd packages/pokemon-mcp-server
-pnpm build
-npm link
-```
-
-Configure Claude Desktop with the global package:
+### Option 1: Direct Bun Execution (Recommended)
 
 ```json
 {
   "mcpServers": {
     "pokemon": {
-      "command": "pokemon-mcp-server",
+      "command": "bun",
+      "args": ["/path/to/pokemcp/packages/pokemon-mcp-server/server.ts"],
       "env": {
         "POKEMON_DATA_DIR": "/path/to/pokemcp/data"
       }
@@ -143,9 +122,18 @@ Configure Claude Desktop with the global package:
 }
 ```
 
-### Option 2: Direct Node Execution
+### Option 2: Built Distribution
 
-If you prefer not to install globally:
+First build the package:
+
+```bash
+bun install
+./scripts/setup-local-dev.sh
+cd packages/pokemon-mcp-server
+bun run build
+```
+
+Then configure Claude Desktop:
 
 ```json
 {
@@ -153,25 +141,6 @@ If you prefer not to install globally:
     "pokemon": {
       "command": "node",
       "args": ["/path/to/pokemcp/packages/pokemon-mcp-server/dist/server.js"],
-      "env": {
-        "POKEMON_DATA_DIR": "/path/to/pokemcp/data"
-      }
-    }
-  }
-}
-```
-
-### Option 3: Development Mode
-
-For active development with hot reload:
-
-```json
-{
-  "mcpServers": {
-    "pokemon": {
-      "command": "pnpm",
-      "args": ["--filter", "pokemon-mcp-server", "start"],
-      "cwd": "/path/to/pokemcp",
       "env": {
         "POKEMON_DATA_DIR": "/path/to/pokemcp/data"
       }
