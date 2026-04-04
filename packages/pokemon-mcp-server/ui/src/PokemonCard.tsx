@@ -1,5 +1,3 @@
-import { useDocumentTheme } from "@modelcontextprotocol/ext-apps/react";
-
 interface PokemonData {
   id: number;
   name: string;
@@ -57,28 +55,6 @@ function capitalize(s: string): string {
 }
 
 export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
-  const theme = useDocumentTheme();
-  const dark = theme === "dark";
-
-  const colors = {
-    cardBg: dark ? "#1e1e2a" : "#ffffff",
-    cardShadow: dark ? "0 8px 32px rgba(0,0,0,0.5)" : "0 8px 32px rgba(0,0,0,0.18)",
-    tileBg: dark ? "#2a2a38" : "#f7f7f7",
-    tileLabel: dark ? "#666" : "#aaa",
-    tileValue: dark ? "#e0e0e0" : "#333",
-    statLabel: dark ? "#666" : "#999",
-    statValue: dark ? "#e0e0e0" : "#333",
-    statTrack: dark ? "#2e2e3e" : "#eeeeee",
-    totalLabel: dark ? "#666" : "#999",
-    totalValue: dark ? "#e0e0e0" : "#333",
-    divider: dark ? "#2e2e3e" : "#eeeeee",
-    sectionLabel: dark ? "#555" : "#bbb",
-    abilityBg: dark ? "#2a2a38" : "#f0f0f0",
-    abilityText: dark ? "#aaa" : "#555",
-    idText: "rgba(255,255,255,0.75)",
-    nameText: "#ffffff",
-  };
-
   const primaryType = pokemon.types[0]?.name ?? "normal";
   const primaryColor = TYPE_COLORS[primaryType] ?? "#A8A878";
   const secondaryColor = TYPE_COLORS[pokemon.types[1]?.name ?? ""] ?? primaryColor;
@@ -87,16 +63,16 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
   return (
     <div
       style={{
-        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        fontFamily: "var(--font-sans, 'Segoe UI', system-ui, sans-serif)",
         maxWidth: "360px",
         margin: "12px auto",
-        borderRadius: "20px",
+        borderRadius: "var(--border-radius-lg, 20px)",
         overflow: "hidden",
-        boxShadow: colors.cardShadow,
-        background: colors.cardBg,
+        boxShadow: "var(--shadow-md, 0 8px 32px rgba(0,0,0,0.18))",
+        background: "var(--color-background-primary, #ffffff)",
       }}
     >
-      {/* Header */}
+      {/* Header — type gradient always looks good on both themes */}
       <div
         style={{
           background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
@@ -116,14 +92,14 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
             background: "rgba(255,255,255,0.12)",
           }}
         />
-        <div style={{ color: colors.idText, fontSize: 13, fontWeight: 700, letterSpacing: 1 }}>
+        <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, fontWeight: 700, letterSpacing: 1 }}>
           #{String(pokemon.id).padStart(3, "0")}
         </div>
         <div
           style={{
-            color: colors.nameText,
+            color: "white",
             fontSize: 28,
-            fontWeight: 800,
+            fontWeight: "var(--font-weight-bold, 800)" as React.CSSProperties["fontWeight"],
             textShadow: "0 2px 6px rgba(0,0,0,0.2)",
             marginTop: 2,
           }}
@@ -141,9 +117,9 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
                 backdropFilter: "blur(6px)",
                 color: "white",
                 padding: "4px 14px",
-                borderRadius: 20,
+                borderRadius: "var(--border-radius-full, 20px)",
                 fontSize: 11,
-                fontWeight: 800,
+                fontWeight: "var(--font-weight-bold, 800)" as React.CSSProperties["fontWeight"],
                 textTransform: "uppercase",
                 letterSpacing: "0.8px",
               }}
@@ -204,8 +180,8 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
             <div
               key={label}
               style={{
-                background: colors.tileBg,
-                borderRadius: 12,
+                background: "var(--color-background-secondary, #f7f7f7)",
+                borderRadius: "var(--border-radius-md, 12px)",
                 padding: "10px 6px",
                 textAlign: "center",
               }}
@@ -213,15 +189,22 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
               <div
                 style={{
                   fontSize: 9,
-                  color: colors.tileLabel,
-                  fontWeight: 700,
+                  color: "var(--color-text-tertiary, #aaa)",
+                  fontWeight: "var(--font-weight-semibold, 700)" as React.CSSProperties["fontWeight"],
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                 }}
               >
                 {label}
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: colors.tileValue, marginTop: 3 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: "var(--font-weight-bold, 700)" as React.CSSProperties["fontWeight"],
+                  color: "var(--color-text-primary, #333)",
+                  marginTop: 3,
+                }}
+              >
                 {value}
               </div>
             </div>
@@ -233,8 +216,8 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
           <div
             style={{
               fontSize: 11,
-              fontWeight: 700,
-              color: colors.sectionLabel,
+              fontWeight: "var(--font-weight-semibold, 700)" as React.CSSProperties["fontWeight"],
+              color: "var(--color-text-tertiary, #bbb)",
               textTransform: "uppercase",
               letterSpacing: "0.8px",
               marginBottom: 10,
@@ -254,8 +237,8 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
                   style={{
                     width: 56,
                     fontSize: 10,
-                    fontWeight: 700,
-                    color: colors.statLabel,
+                    fontWeight: "var(--font-weight-semibold, 700)" as React.CSSProperties["fontWeight"],
+                    color: "var(--color-text-secondary, #999)",
                     textAlign: "right",
                     flexShrink: 0,
                   }}
@@ -266,8 +249,8 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
                   style={{
                     width: 34,
                     fontSize: 12,
-                    fontWeight: 700,
-                    color: colors.statValue,
+                    fontWeight: "var(--font-weight-bold, 700)" as React.CSSProperties["fontWeight"],
+                    color: "var(--color-text-primary, #333)",
                     textAlign: "center",
                     flexShrink: 0,
                   }}
@@ -277,8 +260,8 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
                 <div
                   style={{
                     flex: 1,
-                    background: colors.statTrack,
-                    borderRadius: 6,
+                    background: "var(--color-background-tertiary, #eee)",
+                    borderRadius: "var(--border-radius-sm, 6px)",
                     height: 8,
                     overflow: "hidden",
                   }}
@@ -287,7 +270,7 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
                     style={{
                       width: `${pct}%`,
                       background: color,
-                      borderRadius: 6,
+                      borderRadius: "var(--border-radius-sm, 6px)",
                       height: "100%",
                     }}
                   />
@@ -302,21 +285,29 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
               gap: 8,
               marginTop: 10,
               paddingTop: 10,
-              borderTop: `1px solid ${colors.divider}`,
+              borderTop: "var(--border-width-regular, 1px) solid var(--color-border-primary, #eee)",
             }}
           >
             <div
               style={{
                 width: 56,
                 fontSize: 10,
-                fontWeight: 700,
-                color: colors.totalLabel,
+                fontWeight: "var(--font-weight-semibold, 700)" as React.CSSProperties["fontWeight"],
+                color: "var(--color-text-secondary, #999)",
                 textAlign: "right",
               }}
             >
               TOTAL
             </div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: colors.totalValue }}>{totalStats}</div>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: "var(--font-weight-bold, 800)" as React.CSSProperties["fontWeight"],
+                color: "var(--color-text-primary, #333)",
+              }}
+            >
+              {totalStats}
+            </div>
           </div>
         </div>
 
@@ -325,8 +316,8 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
           <div
             style={{
               fontSize: 11,
-              fontWeight: 700,
-              color: colors.sectionLabel,
+              fontWeight: "var(--font-weight-semibold, 700)" as React.CSSProperties["fontWeight"],
+              color: "var(--color-text-tertiary, #bbb)",
               textTransform: "uppercase",
               letterSpacing: "0.8px",
               marginBottom: 8,
@@ -339,13 +330,13 @@ export default function PokemonCard({ pokemon }: { pokemon: PokemonData }) {
               <span
                 key={a.slot}
                 style={{
-                  background: a.is_hidden ? `${primaryColor}22` : colors.abilityBg,
-                  color: a.is_hidden ? primaryColor : colors.abilityText,
-                  border: `1px solid ${a.is_hidden ? primaryColor + "44" : "transparent"}`,
+                  background: a.is_hidden ? `${primaryColor}22` : "var(--color-background-secondary, #f0f0f0)",
+                  color: a.is_hidden ? primaryColor : "var(--color-text-secondary, #555)",
+                  border: `1px solid ${a.is_hidden ? primaryColor + "44" : "var(--color-border-primary, transparent)"}`,
                   padding: "5px 12px",
-                  borderRadius: 10,
+                  borderRadius: "var(--border-radius-sm, 10px)",
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: "var(--font-weight-medium, 600)" as React.CSSProperties["fontWeight"],
                 }}
               >
                 {capitalize(a.name)}

@@ -45,7 +45,7 @@ function App() {
     },
   });
 
-  // Sync host color-scheme so light-dark() CSS and useDocumentTheme() work
+  // Inject Claude's CSS variables (--color-background-primary etc.) onto document.documentElement
   useHostStyles(app, app?.getHostContext());
 
   if (error) {
