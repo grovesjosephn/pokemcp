@@ -13,9 +13,11 @@ import { promises as fs } from "fs";
 import { existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { z } from "zod";
+import { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 
 // Import extracted tool classes
 import { GetPokemonTool } from "./src/tools/getPokemon.js";
+import { PokemonCompleteRow, preparePokemonQuery, rowsToPokemonData } from "./src/tools/pokemonQuery.js";
 import { SearchPokemonTool } from "./src/tools/searchPokemon.js";
 import { ComparePokemonTool } from "./src/tools/comparePokemon.js";
 import { GetTypeEffectivenessTool } from "./src/tools/getTypeEffectiveness.js";
@@ -26,12 +28,16 @@ import { MarkdownFormatter } from "./src/formatters/index.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const POKEMON_CARD_URI = "ui://get-pokemon/mcp-app.html";
+const DIST_UI_DIR = path.join(__dirname, "dist", "ui");
+
 class PokemonMCPServer {
   private server: McpServer;
   private db: Database;
 
   // Tool instances
   private getPokemonTool: GetPokemonTool;
+  private pokemonQueryStmt: ReturnType<typeof preparePokemonQuery>;
   private searchPokemonTool: SearchPokemonTool;
   private comparePokemonTool: ComparePokemonTool;
   private getTypeEffectivenessTool: GetTypeEffectivenessTool;
@@ -69,6 +75,7 @@ class PokemonMCPServer {
 
     const formatter = new MarkdownFormatter();
     this.getPokemonTool = new GetPokemonTool(this.db, formatter);
+    this.pokemonQueryStmt = preparePokemonQuery(this.db);
     this.searchPokemonTool = new SearchPokemonTool(this.db, formatter);
     this.comparePokemonTool = new ComparePokemonTool(this.db, formatter);
     this.getTypeEffectivenessTool = new GetTypeEffectivenessTool(this.db, formatter);
@@ -80,7 +87,8 @@ class PokemonMCPServer {
   }
 
   private setupTools(): void {
-    this.server.registerTool(
+    registerAppTool(
+      this.server,
       "get_pokemon",
       {
         title: "Get Pokemon",
@@ -88,10 +96,34 @@ class PokemonMCPServer {
         inputSchema: {
           identifier: z.string().describe("Pokemon name or ID number"),
         },
+        _meta: { ui: { resourceUri: POKEMON_CARD_URI } },
       },
       async ({ identifier }) => {
-        return await this.getPokemonTool.execute(identifier);
+        const textResult = await this.getPokemonTool.execute(identifier);
+        const rows = this.pokemonQueryStmt.all(identifier, identifier) as PokemonCompleteRow[];
+        const pokemon = rowsToPokemonData(rows);
+        if (!pokemon) return textResult;
+        return {
+          ...textResult,
+          content: [...textResult.content, { type: "text" as const, text: JSON.stringify(pokemon) }],
+        };
       },
+    );
+
+    registerAppResource(
+      this.server,
+      "Pokemon Card",
+      POKEMON_CARD_URI,
+      { description: "Interactive Pokémon card UI" },
+      async () => ({
+        contents: [
+          {
+            uri: POKEMON_CARD_URI,
+            mimeType: RESOURCE_MIME_TYPE,
+            text: await fs.readFile(path.join(DIST_UI_DIR, "mcp-app.html"), "utf-8"),
+          },
+        ],
+      }),
     );
 
     this.server.registerTool(

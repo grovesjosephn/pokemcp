@@ -15,7 +15,8 @@
   "type": "module",
   "main": "server.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "bun run build:ui && tsc",
+    "build:ui": "vite build",
     "dev": "bun --watch server.ts",
     "start": "bun server.ts",
     "inspect": "bunx @modelcontextprotocol/inspector bun server.ts",
@@ -31,14 +32,22 @@
     "prepack": "bun run build"
   },
   "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.5.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.25.0"
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.21.1",
     "@types/node": "^20.11.30",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
     "bun-types": "latest",
-    "typescript": "^5.4.2"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "typescript": "^5.4.2",
+    "vite": "^8.0.3",
+    "vite-plugin-singlefile": "^2.3.2"
   },
   "mcp": {
     "server": {
